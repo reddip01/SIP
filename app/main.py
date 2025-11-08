@@ -5,6 +5,9 @@ from .database import engine, Base
 # Importar los routers 
 from .routers import auth , admin , empresas , estudiantes
 
+#importacion de modulod e cors
+from fastapi.middleware.cors import CORSMiddleware
+
 # --- CREACIÓN DE TABLAS ---
 Base.metadata.create_all(bind=engine)
 
@@ -14,6 +17,21 @@ app = FastAPI(
     title="Sistema Integrado de Prácticas (SIP)",
     description="API para la gestión de prácticas profesionales de la universidad.",
     version="0.1.0"
+)
+
+#configuracion para manejo de cors
+origins = [
+    "http://localhost:5173",      # El puerto por defecto de Vite
+    "http://192.168.1.12:5173", # Acceso desde la IP (por si acaso)
+    "http://localhost",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # --- Montar los Routers ---

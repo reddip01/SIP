@@ -10,3 +10,13 @@ __pycache__/
 
 # Archivos de configuración local (¡Importante!)
 .env
+# --- Frontend (Node.js) ---
+frontend/node_modules/
+frontend/dist/
+frontend/.DS_Store
+frontend/.env.local
+frontend/.env.*.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
