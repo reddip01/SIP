@@ -6,7 +6,7 @@ from .. import crud, schemas, database, security, models
 
 router = APIRouter()
 
-# --- Endpoint de Creación de Usuarios de Universidad (Admin, Coord) ---
+# --- Endpoint de Creación de Usuarios de Universidad  ---
 
 @router.post("/usuarios", response_model=schemas.UsuarioUniversidadResponse, status_code=status.HTTP_201_CREATED)
 def create_admin_user(
@@ -27,7 +27,7 @@ def create_admin_user(
     
     if user_count > 0:
         # Si ya hay usuarios, exigir autenticación de admin
-        # (Esto fallará si no se provee un token de admin válido)
+        # (fallará si no se provee un token de admin válido)
         try:
             admin_user = security.get_current_admin_user(Depends(security.get_current_user), db)
         except HTTPException:
@@ -68,8 +68,7 @@ def create_programa_academico(
     Crea un nuevo programa académico.
     (Protegido: Solo Admin/Coordinador)
     """
-    # Aquí iría la lógica para verificar si ya existe, etc.
-    # Por ahora lo creamos directamente (lo añadiremos a crud.py)
+    # Aquí iría la lógica para verificar si ya existe,
     db_programa = models.ProgramaAcademico(**programa.dict())
     db.add(db_programa)
     db.commit()
@@ -94,7 +93,6 @@ def create_estudiante_user(
         )
     
     # --- VALIDACIÓN DE PROGRAMA ---
-    # (Este es el bloque nuevo/modificado)
     # Verificamos que el id_programa exista antes de crear el estudiante
     db_programa = crud.get_programa_by_id(db, programa_id=student.id_programa)
     if not db_programa:
@@ -125,7 +123,127 @@ def create_empresa_registro(
             detail="El NIT de la empresa ya está registrado."
         )
     
-    # Aquí también podríamos verificar el email_contacto, etc.
     
     return crud.create_empresa(db=db, empresa=empresa)
 
+# vacantes por estado
+def get_vacantes_por_estado(db: Session, estado: models.EstadoVacanteEnum) -> List[models.Vacante]:
+    """Obtiene todas las vacantes con un estado específico."""
+    return db.query(models.Vacante).filter(models.Vacante.estado == estado).all()
+
+# endpoints para gestionar las vacantes
+
+@router.get("/vacantes/pendientes", response_model=List[schemas.VacanteResponse])
+def get_vacantes_pendientes_revision(
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Obtiene todas las vacantes que están 'En Revisión' (pendientes de aprobar).
+    (Protegido: Solo Admin/Coordinador)
+    """
+    return crud.get_vacantes_por_estado(db, estado=models.EstadoVacanteEnum.En_Revision)
+
+
+@router.patch("/vacantes/{vacante_id}/aprobar", response_model=schemas.VacanteResponse)
+def aprobar_vacante(
+    vacante_id: int,
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Aprueba una vacante, cambiándola a estado 'Abierta'.
+    (Protegido: Solo Admin/Coordinador)
+    """
+    vacante = db.get(models.Vacante, vacante_id)
+    if not vacante:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La vacante no existe.")
+    
+    # Comprobamos que esté en revisión para no aprobar algo ya aprobado
+    if vacante.estado != models.EstadoVacanteEnum.En_Revision.value:
+         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La vacante no está en estado 'En Revisión'.")
+
+    vacante.estado = models.EstadoVacanteEnum.Abierta.value
+    db.commit()
+    db.refresh(vacante)
+    return vacante
+
+
+@router.patch("/vacantes/{vacante_id}/rechazar", response_model=schemas.VacanteResponse)
+def rechazar_vacante(
+    vacante_id: int,
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Rechaza una vacante, cambiándola a estado 'Cerrada'.
+    (Protegido: Solo Admin/Coordinador)
+    """
+    vacante = db.get(models.Vacante, vacante_id)
+    if not vacante:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La vacante no existe.")
+        
+    vacante.estado = models.EstadoVacanteEnum.Cerrada.value
+    db.commit()
+    db.refresh(vacante)
+    return vacante
+
+# endpoints para que la universidad pueda aporbar o rechazar la postulacion aprobada por la empresa.
+
+@router.get("/postulaciones/pendientes", response_model=List[schemas.PostulacionResponse])
+def get_postulaciones_pendientes_admin(
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Obtiene todas las postulaciones pendientes de revisión por la universidad.
+    (Protegido: Solo Admin/Coordinador)
+    """
+    return crud.get_postulaciones_por_estado(
+        db, estado=models.EstadoPostulacionEnum.En_Revision_Universidad
+    )
+
+
+@router.patch("/postulaciones/{postulacion_id}/aprobar", response_model=schemas.PostulacionResponse)
+def aprobar_postulacion_admin(
+    postulacion_id: int,
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Da la aprobación final a una postulación.
+    Cambia el estado a 'Aprobada'.
+    (Protegido: Solo Admin/Coordinador)
+    """
+    postulacion = db.get(models.Postulacion, postulacion_id)
+    if not postulacion:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Postulación no encontrada.")
+
+    if postulacion.estado_actual != models.EstadoPostulacionEnum.En_Revision_Universidad.value:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La postulación no está pendiente de revisión por la universidad.")
+
+    postulacion.estado_actual = models.EstadoPostulacionEnum.Aprobada.value
+    db.commit()
+    db.refresh(postulacion)
+    return postulacion
+
+
+@router.patch("/postulaciones/{postulacion_id}/rechazar", response_model=schemas.PostulacionResponse)
+def rechazar_postulacion_admin(
+    postulacion_id: int,
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Rechaza finalmente una postulación.
+    Cambia el estado a 'Rechazada por Universidad'.
+    (Protegido: Solo Admin/Coordinador)
+    """
+    postulacion = db.get(models.Postulacion, postulacion_id)
+    if not postulacion:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Postulación no encontrada.")
+
+    postulacion.estado_actual = models.EstadoPostulacionEnum.Rechazada_por_Universidad.value
+    db.commit()
+    db.refresh(postulacion)
+    return postulacion

@@ -9,8 +9,6 @@ from . import schemas, models, database
 from sqlalchemy.orm import Session
 
 # --- CONFIGURACIÓN DE JWT ---
-# ¡IMPORTANTE! En un proyecto real, esta clave debe estar en una variable de entorno (.env)
-# y ser una cadena larga y aleatoria.
 SECRET_KEY = "tu-clave-secreta-muy-larga-y-dificil-de-adivinar"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60  # Duración del token

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from . import models
 from .database import engine, Base
 
-# Importar los routers (¡ahora importamos auth!)
+# Importar los routers 
 from .routers import auth , admin , empresas , estudiantes
 
 # --- CREACIÓN DE TABLAS ---
@@ -17,7 +17,6 @@ app = FastAPI(
 )
 
 # --- Montar los Routers ---
-# ¡Activamos el router de autenticación!
 app.include_router(auth.router, prefix="/api/auth", tags=["Autenticación"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Administrador"])
 app.include_router(empresas.router, prefix="/api/empresas", tags=["Empresas"])

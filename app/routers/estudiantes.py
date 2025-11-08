@@ -34,7 +34,7 @@ def postular_a_vacante(
     if not vacante:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La vacante no existe.")
     
-    if vacante.estado != models.EstadoVacanteEnum.Abierta:
+    if vacante.estado != models.EstadoVacanteEnum.Abierta.value:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La vacante no está abierta a postulaciones.")
 
     # 2. Verificar que el estudiante no se haya postulado ya

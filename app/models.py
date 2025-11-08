@@ -7,16 +7,21 @@ import enum
 from .database import Base # Importamos la Base declarativa de database.py
 
 # --- Definición de ENUMs de Python ---
-# Esto es bueno para que SQLAlchemy use los mismos ENUMs que tu DB
 
 class EstadoPostulacionEnum(str, enum.Enum):
     Recibida = "Recibida"
-    En_Revision_Empresa = "En Revisión Empresa"
-    En_Revision_Universidad = "En Revisión Universidad"
+    En_Revision_Empresa = "En Revisión Empresa" 
+    En_Revision_Universidad = "En Revisión Universidad" 
+    
+    # Nuevos estados de rechazo
+    Rechazada_por_Empresa = "Rechazada por Empresa"
+    Rechazada_por_Universidad = "Rechazada por Universidad"
+
     Aprobada = "Aprobada"
-    Rechazada = "Rechazada"
+    Rechazada = "Rechazada" 
 
 class EstadoVacanteEnum(str, enum.Enum):
+    En_Revision = "En Revisión"
     Abierta = "Abierta"
     Cerrada = "Cerrada"
     En_Proceso = "En Proceso"
@@ -64,10 +69,9 @@ class UsuarioUniversidad(Base):
     id_usuario = Column(Integer, primary_key=True, index=True)
     nombre = Column(String(100), nullable=False)
     email = Column(String(100), nullable=False, unique=True, index=True)
-    rol = Column(Enum(RolUniversidadEnum), nullable=False)
+    rol = Column(Enum(RolUniversidadEnum, native_enum=False), nullable=False)
     
     # Campo para la contraseña hasheada (¡IMPORTANTE!)
-    # Tu SQL no lo tiene, pero es 100% necesario para el login.
     hashed_password = Column(String, nullable=False) 
 
     # Relación: Un usuario de U gestiona muchos historiales
@@ -101,7 +105,7 @@ class Vacante(Base):
     titulo_vacante = Column(String(200), nullable=False)
     descripcion_funciones = Column(Text, nullable=False)
     fecha_publicacion = Column(DateTime(timezone=True), server_default=func.now())
-    estado = Column(Enum(EstadoVacanteEnum), nullable=False, default=EstadoVacanteEnum.Abierta) 
+    estado = Column(Enum(EstadoVacanteEnum, native_enum=False), nullable=False, default=EstadoVacanteEnum.Abierta)
 
     # Relación: Una vacante pertenece a una empresa
     empresa = relationship("Empresa", back_populates="vacantes")
@@ -116,7 +120,7 @@ class Postulacion(Base):
     id_estudiante = Column(Integer, ForeignKey("estudiantes.id_estudiante", ondelete="CASCADE"), nullable=False)
     id_vacante = Column(Integer, ForeignKey("vacantes.id_vacante", ondelete="CASCADE"), nullable=False)
     fecha_postulacion = Column(DateTime(timezone=True), server_default=func.now())
-    estado_actual = Column(Enum(EstadoPostulacionEnum), nullable=False, default=EstadoPostulacionEnum.Recibida)
+    estado_actual = Column(Enum(EstadoPostulacionEnum, native_enum=False), nullable=False, default=EstadoPostulacionEnum.Recibida)
 
     # Relación: Una postulación es de un estudiante
     estudiante = relationship("Estudiante", back_populates="postulaciones")
@@ -134,7 +138,7 @@ class DocumentoAdjunto(Base):
     id_documento = Column(Integer, primary_key=True, index=True)
     id_postulacion = Column(Integer, ForeignKey("postulaciones.id_postulacion", ondelete="CASCADE"), nullable=False)
     nombre_archivo = Column(String(255), nullable=False)
-    tipo_documento = Column(Enum(TipoDocumentoEnum), nullable=False)
+    tipo_documento = Column(Enum(TipoDocumentoEnum, native_enum=False), nullable=False)
     ruta_almacenamiento = Column(Text, nullable=False)
     fecha_carga = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -147,7 +151,7 @@ class HistorialEstadoPostulacion(Base):
 
     id_historial = Column(Integer, primary_key=True, index=True)
     id_postulacion = Column(Integer, ForeignKey("postulaciones.id_postulacion", ondelete="CASCADE"), nullable=False)
-    estado = Column(Enum(EstadoPostulacionEnum), nullable=False)
+    estado = Column(Enum(EstadoPostulacionEnum, native_enum=False), nullable=False)
     fecha_cambio = Column(DateTime(timezone=True), server_default=func.now())
     id_usuario_universidad = Column(Integer, ForeignKey("usuarios_universidad.id_usuario", ondelete="SET NULL"), nullable=True)
     comentarios = Column(Text, nullable=True)

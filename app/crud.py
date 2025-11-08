@@ -13,7 +13,6 @@ def get_student_by_email(db: Session, email: str) -> models.Estudiante:
     return db.query(models.Estudiante).filter(models.Estudiante.email_institucional == email).first()
 
 # --- FUNCIONES DE CREACIÓN DE USUARIOS (Para Módulo Admin) ---
-# (Las pongo aquí de una vez porque las necesitaremos muy pronto)
 
 def create_usuario_universidad(db: Session, user: schemas.UsuarioUniversidadCreate) -> models.UsuarioUniversidad:
     """Crea un nuevo usuario de la universidad (Admin, Coord, etc.)"""
@@ -84,11 +83,14 @@ def get_programa_by_id(db: Session, programa_id: int) -> models.ProgramaAcademic
 # funcion para crear vacantes
 
 def create_vacante(db: Session, vacante: schemas.VacanteBase, empresa_id: int) -> models.Vacante:
-    """Crea una nueva vacante asociada a una empresa."""
+    """Crea una nueva vacante asociada a una empresa.
+    Por defecto, se crea en estado 'En Revisión' para aprobación del admin.
+    """
     db_vacante = models.Vacante(
         titulo_vacante=vacante.titulo_vacante,
         descripcion_funciones=vacante.descripcion_funciones,
-        estado=vacante.estado.value, # <-- ESTE ES EL ARREGLO
+        # Usamos .value para obtener el string "En Revisión" (con espacio)
+        estado=models.EstadoVacanteEnum.En_Revision.value, 
         id_empresa=empresa_id
     )
     db.add(db_vacante)
@@ -99,26 +101,51 @@ def create_vacante(db: Session, vacante: schemas.VacanteBase, empresa_id: int) -
 # Logica estudiante
 
 def get_vacantes_disponibles(db: Session) -> List[models.Vacante]:
-    """Obtiene todas las vacantes que están 'Abierta'."""
+    """[ESTUDIANTE] Obtiene todas las vacantes que están 'Abierta'."""
     return db.query(models.Vacante).filter(
-        models.Vacante.estado == models.EstadoVacanteEnum.Abierta
+        models.Vacante.estado == models.EstadoVacanteEnum.Abierta.value # <-- ¡ARREGLADO!
     ).all()
 
 def get_postulacion_existente(db: Session, estudiante_id: int, vacante_id: int) -> models.Postulacion:
-    """Verifica si un estudiante ya se postuló a una vacante."""
+    """[ESTUDIANTE] Verifica si un estudiante ya se postuló a una vacante."""
     return db.query(models.Postulacion).filter(
         models.Postulacion.id_estudiante == estudiante_id,
         models.Postulacion.id_vacante == vacante_id
     ).first()
 
 def create_postulacion(db: Session, estudiante_id: int, vacante_id: int) -> models.Postulacion:
-    """Crea una nueva postulación para un estudiante."""
-    # (El estado por defecto 'Recibida' se define en el modelo)
+    """[ESTUDIANTE] Crea una nueva postulación para un estudiante."""
     db_postulacion = models.Postulacion(
         id_estudiante=estudiante_id,
-        id_vacante=vacante_id
+        id_vacante=vacante_id,
+        # Usamos .value para el estado por defecto
+        estado_actual=models.EstadoPostulacionEnum.Recibida.value # <-- ¡ARREGLADO!
     )
     db.add(db_postulacion)
     db.commit()
     db.refresh(db_postulacion)
     return db_postulacion
+
+# funcion mostrar vacantes para revision a admin
+
+def get_vacantes_por_estado(db: Session, estado: models.EstadoVacanteEnum) -> List[models.Vacante]:
+    """Obtiene todas las vacantes con un estado específico."""
+    # Usamos .value para comparar el string "En Revisión" con la BD
+    return db.query(models.Vacante).filter(models.Vacante.estado == estado.value).all()
+
+# funciones para ver y actualizar las postulaciones
+
+def get_postulaciones_por_empresa(db: Session, empresa_id: int) -> List[models.Postulacion]:
+    """Obtiene todas las postulaciones asociadas a las vacantes de una empresa."""
+    return db.query(models.Postulacion)\
+             .join(models.Vacante)\
+             .filter(models.Vacante.id_empresa == empresa_id)\
+             .all()
+
+# verificar postulaciones aporbadas por empresas desde admin
+
+def get_postulaciones_por_estado(db: Session, estado: models.EstadoPostulacionEnum) -> List[models.Postulacion]:
+    """Obtiene todas las postulaciones con un estado específico."""
+    return db.query(models.Postulacion).filter(
+        models.Postulacion.estado_actual == estado.value
+    ).all()

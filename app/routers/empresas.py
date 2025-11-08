@@ -20,3 +20,69 @@ def create_nueva_vacante(
     """
     # Pasamos el id de la empresa desde el token, no desde el body del JSON
     return crud.create_vacante(db=db, vacante=vacante, empresa_id=current_empresa.id_empresa)
+
+# botones para aprobar o rechazar la postulacion
+
+@router.get("/postulaciones", response_model=List[schemas.PostulacionResponse])
+def get_postulaciones_recibidas(
+    db: Session = Depends(database.get_db),
+    current_empresa: models.Empresa = Depends(security.get_current_empresa_user)
+):
+    """
+    [EMPRESA] Obtiene todas las postulaciones recibidas para sus vacantes.
+    (Protegido: Solo Empresa)
+    """
+    return crud.get_postulaciones_por_empresa(db=db, empresa_id=current_empresa.id_empresa)
+
+
+@router.patch("/postulaciones/{postulacion_id}/aprobar", response_model=schemas.PostulacionResponse)
+def aprobar_postulacion_empresa(
+    postulacion_id: int,
+    db: Session = Depends(database.get_db),
+    current_empresa: models.Empresa = Depends(security.get_current_empresa_user)
+):
+    """
+    [EMPRESA] Aprueba una postulación.
+    Cambia el estado de 'Recibida' a 'En Revisión Universidad'.
+    (Protegido: Solo Empresa)
+    """
+    postulacion = db.get(models.Postulacion, postulacion_id)
+    if not postulacion:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Postulación no encontrada.")
+    
+    # Seguridad: Asegurarse de que esta empresa sea dueña de la vacante
+    if postulacion.vacante.id_empresa != current_empresa.id_empresa:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tiene permisos sobre esta postulación.")
+        
+    # Lógica de estado
+    if postulacion.estado_actual != models.EstadoPostulacionEnum.Recibida.value:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"La postulación no está en estado 'Recibida'. Estado actual: {postulacion.estado_actual}")
+
+    postulacion.estado_actual = models.EstadoPostulacionEnum.En_Revision_Universidad.value
+    db.commit()
+    db.refresh(postulacion)
+    return postulacion
+
+
+@router.patch("/postulaciones/{postulacion_id}/rechazar", response_model=schemas.PostulacionResponse)
+def rechazar_postulacion_empresa(
+    postulacion_id: int,
+    db: Session = Depends(database.get_db),
+    current_empresa: models.Empresa = Depends(security.get_current_empresa_user)
+):
+    """
+    [EMPRESA] Rechaza una postulación.
+    Cambia el estado a 'Rechazada por Empresa'.
+    (Protegido: Solo Empresa)
+    """
+    postulacion = db.get(models.Postulacion, postulacion_id)
+    if not postulacion:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Postulación no encontrada.")
+    
+    if postulacion.vacante.id_empresa != current_empresa.id_empresa:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tiene permisos sobre esta postulación.")
+
+    postulacion.estado_actual = models.EstadoPostulacionEnum.Rechazada_por_Empresa.value
+    db.commit()
+    db.refresh(postulacion)
+    return postulacion

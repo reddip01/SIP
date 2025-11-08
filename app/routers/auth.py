@@ -17,7 +17,6 @@ def login_for_access_token(
     Recibe un 'username' (que es el email) y 'password'.
     """
     user = None
-    # ESTA ES LA LÍNEA CLAVE: Inicializamos user_email aquí
     user_email = form_data.username
     
     # 1. Intentar autenticar como Administrador/Coordinador
@@ -50,7 +49,7 @@ def login_for_access_token(
     # 5. Crear el token JWT
     access_token_expires = timedelta(minutes=security.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
-        data={"sub": user_email}, # Usamos la variable user_email (que ahora siempre existe)
+        data={"sub": user_email}, # Usamos la variable user_email 
         expires_delta=access_token_expires
     )
     

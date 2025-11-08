@@ -90,7 +90,7 @@ class EstudianteResponse(EstudianteBase):
 class VacanteBase(BaseModel):
     titulo_vacante: str
     descripcion_funciones: str
-    estado: Optional[EstadoVacanteEnum] = EstadoVacanteEnum.Abierta
+
 
 class VacanteCreate(VacanteBase):
     id_empresa: int # Se necesita saber qué empresa la crea
