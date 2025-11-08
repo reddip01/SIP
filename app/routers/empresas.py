@@ -6,6 +6,17 @@ from .. import crud, schemas, database, security, models
 
 router = APIRouter()
 
+# router para listar vacantes en empresa
+@router.get("/vacantes/me", response_model=List[schemas.VacanteResponse])
+def get_mis_vacantes(
+    db: Session = Depends(database.get_db),
+    current_empresa: models.Empresa = Depends(security.get_current_empresa_user)
+):
+    """
+    [EMPRESA] Obtiene una lista de todas las vacantes creadas por la empresa autenticada.
+    (Protegido: Solo Empresa)
+    """
+    return crud.get_vacantes_por_empresa(db=db, empresa_id=current_empresa.id_empresa)
 
 @router.post("/vacantes", response_model=schemas.VacanteResponse, status_code=status.HTTP_201_CREATED)
 def create_nueva_vacante(

@@ -6,6 +6,17 @@ from .. import crud, schemas, database, security, models
 
 router = APIRouter()
 
+# postulaciones por estudiante
+@router.get("/postulaciones/me", response_model=List[schemas.PostulacionResponse])
+def get_mis_postulaciones(
+    db: Session = Depends(database.get_db),
+    current_student: models.Estudiante = Depends(security.get_current_student_user)
+):
+    """
+    [ESTUDIANTE] Obtiene un historial de todas las postulaciones del estudiante autenticado.
+    (Protegido: Solo Estudiante)
+    """
+    return crud.get_postulaciones_por_estudiante(db=db, estudiante_id=current_student.id_estudiante)
 
 @router.get("/vacantes", response_model=List[schemas.VacanteResponse])
 def get_todas_las_vacantes(

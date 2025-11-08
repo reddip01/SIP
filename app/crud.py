@@ -149,3 +149,19 @@ def get_postulaciones_por_estado(db: Session, estado: models.EstadoPostulacionEn
     return db.query(models.Postulacion).filter(
         models.Postulacion.estado_actual == estado.value
     ).all()
+
+# obtener vacantes por empresa
+def get_vacantes_por_empresa(db: Session, empresa_id: int) -> List[models.Vacante]:
+    """Obtiene todas las vacantes publicadas por una empresa específica."""
+    return db.query(models.Vacante)\
+             .filter(models.Vacante.id_empresa == empresa_id)\
+             .order_by(models.Vacante.fecha_publicacion.desc())\
+             .all()
+
+# postulaciones por estudiante
+def get_postulaciones_por_estudiante(db: Session, estudiante_id: int) -> List[models.Postulacion]:
+    """Obtiene todas las postulaciones de un estudiante específico."""
+    return db.query(models.Postulacion)\
+             .filter(models.Postulacion.id_estudiante == estudiante_id)\
+             .order_by(models.Postulacion.fecha_postulacion.desc())\
+             .all()
