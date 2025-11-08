@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from typing import Optional, List, Union
 from datetime import datetime
 from .models import (EstadoPostulacionEnum, EstadoVacanteEnum, 
                        RolUniversidadEnum, TipoDocumentoEnum)
@@ -159,3 +159,9 @@ class HistorialEstadoResponse(HistorialEstadoBase):
 
     class Config:
         from_attributes = True
+
+# Este schema especial le dice al frontend que la respuesta
+# puede ser CUALQUIERA de estos tres tipos de usuario.
+class UserMeResponse(BaseModel):
+    user_data: Union[UsuarioUniversidadResponse, EstudianteResponse, EmpresaResponse]
+    user_type: str # Añadimos un campo extra para facilitar la vida al frontend

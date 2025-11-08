@@ -1,11 +1,11 @@
 // src/main.jsx
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import LoginPage from './LoginPage.jsx' // Importa tu nueva página
-import './index.css' // (El CSS que vaciamos)
+import App from './App.jsx' // <-- ¡CAMBIO! Ahora cargamos App
+import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <LoginPage /> 
+    <App /> 
   </React.StrictMode>,
 )

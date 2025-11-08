@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
 
-from .. import crud, schemas, security, database
+from .. import crud, schemas, security, database, models
 
 router = APIRouter()
 
@@ -54,3 +54,27 @@ def login_for_access_token(
     )
     
     return {"access_token": access_token, "token_type": "bearer"}
+
+# endpoint para identificar quien es el que inicio sesion
+
+@router.get("/me", response_model=schemas.UserMeResponse)
+def read_users_me(
+    current_user = Depends(security.get_current_user)
+):
+    """
+    Obtiene los datos del usuario actualmente autenticado (basado en el token).
+    """
+    user_type = None
+    
+    if isinstance(current_user, models.UsuarioUniversidad):
+        user_type = "admin"
+    elif isinstance(current_user, models.Estudiante):
+        user_type = "estudiante"
+    elif isinstance(current_user, models.Empresa):
+        user_type = "empresa"
+    
+    if not user_type:
+        # Esto no debería pasar si el token es válido, pero es una buena defensa
+        raise HTTPException(status_code=401, detail="Usuario desconocido")
+
+    return {"user_data": current_user, "user_type": user_type}
