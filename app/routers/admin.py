@@ -207,13 +207,13 @@ def get_postulaciones_pendientes_admin(
 @router.patch("/postulaciones/{postulacion_id}/aprobar", response_model=schemas.PostulacionResponse)
 def aprobar_postulacion_admin(
     postulacion_id: int,
+    datos_aprobacion: schemas.AprobacionAdminInput, # Recibimos las fechas
     db: Session = Depends(database.get_db),
     current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
 ):
     """
     [ADMIN] Da la aprobación final a una postulación.
-    Cambia el estado a 'Aprobada'.
-    (Protegido: Solo Admin/Coordinador)
+    Cambia el estado a 'Aprobada' y guarda las fechas de inicio/fin.
     """
     postulacion = db.get(models.Postulacion, postulacion_id)
     if not postulacion:
@@ -222,28 +222,57 @@ def aprobar_postulacion_admin(
     if postulacion.estado_actual != models.EstadoPostulacionEnum.En_Revision_Universidad.value:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La postulación no está pendiente de revisión por la universidad.")
 
+    # Actualizamos la postulación
     postulacion.estado_actual = models.EstadoPostulacionEnum.Aprobada.value
+    postulacion.fecha_inicio_practica = datos_aprobacion.fecha_inicio_practica
+    postulacion.fecha_fin_practica = datos_aprobacion.fecha_fin_practica
+    # Marcamos la vacante como 'Cubierta'
+    postulacion.vacante.estado = models.EstadoVacanteEnum.Cubierta.value 
+
+    # Creamos el registro en el historial
+    historial = models.HistorialEstadoPostulacion(
+        id_postulacion=postulacion_id,
+        estado=models.EstadoPostulacionEnum.Aprobada,
+        # ¡Usamos el nuevo campo!
+        id_actor_universidad=current_admin.id_usuario, 
+        comentarios=datos_aprobacion.comentarios
+    )
+    db.add(historial)
+
     db.commit()
     db.refresh(postulacion)
     return postulacion
 
+# para rechazo de una postulacion
 
 @router.patch("/postulaciones/{postulacion_id}/rechazar", response_model=schemas.PostulacionResponse)
 def rechazar_postulacion_admin(
     postulacion_id: int,
+    # ¡CAMBIO 1! Aceptamos el nuevo schema
+    datos_rechazo: schemas.RechazoInput, 
     db: Session = Depends(database.get_db),
     current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
 ):
     """
     [ADMIN] Rechaza finalmente una postulación.
-    Cambia el estado a 'Rechazada por Universidad'.
-    (Protegido: Solo Admin/Coordinador)
+    Cambia el estado a 'Rechazada por Universidad' y guarda un comentario en el historial.
     """
     postulacion = db.get(models.Postulacion, postulacion_id)
     if not postulacion:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Postulación no encontrada.")
 
+    # ¡CAMBIO 2! Actualizamos el estado de la postulación
     postulacion.estado_actual = models.EstadoPostulacionEnum.Rechazada_por_Universidad.value
+
+    # ¡CAMBIO 3! Creamos el registro en el historial
+    historial = models.HistorialEstadoPostulacion(
+        id_postulacion=postulacion_id,
+        estado=models.EstadoPostulacionEnum.Rechazada_por_Universidad,
+        id_actor_universidad=current_admin.id_usuario, # Guardamos QUIÉN rechazó
+        comentarios=datos_rechazo.comentarios         # Guardamos POR QUÉ
+    )
+    db.add(historial)
+
     db.commit()
     db.refresh(postulacion)
     return postulacion
@@ -367,3 +396,44 @@ def get_all_programas(
     (Protegido: Solo Admin/Coordinador)
     """
     return crud.get_programas(db=db)
+
+# activar o inactivar programas
+
+@router.patch("/programas/{programa_id}/activar", response_model=schemas.ProgramaAcademicoResponse)
+def activar_programa(
+    programa_id: int,
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Activa un programa académico (esta_activo = True).
+    (Protegido: Solo Admin/Coordinador)
+    """
+    programa = db.get(models.ProgramaAcademico, programa_id)
+    if not programa:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Programa no encontrado.")
+
+    programa.esta_activo = True
+    db.commit()
+    db.refresh(programa)
+    return programa
+
+
+@router.patch("/programas/{programa_id}/inactivar", response_model=schemas.ProgramaAcademicoResponse)
+def inactivar_programa(
+    programa_id: int,
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Inactiva un programa académico (esta_activo = False).
+    (Protegido: Solo Admin/Coordinador)
+    """
+    programa = db.get(models.ProgramaAcademico, programa_id)
+    if not programa:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Programa no encontrado.")
+
+    programa.esta_activo = False
+    db.commit()
+    db.refresh(programa)
+    return programa

@@ -26,7 +26,7 @@ class ProgramaAcademicoCreate(ProgramaAcademicoBase):
 
 class ProgramaAcademicoResponse(ProgramaAcademicoBase):
     id_programa: int
-
+    esta_activo: bool
     class Config:
         from_attributes = True # Permite a Pydantic leer modelos de SQLAlchemy
 
@@ -45,6 +45,7 @@ class EmpresaCreate(EmpresaBase):
 class EmpresaResponse(EmpresaBase):
     id_empresa: int
     esta_activo: bool
+    fecha_creacion: datetime
 
     class Config:
         from_attributes = True
@@ -81,6 +82,7 @@ class EstudianteCreate(EstudianteBase):
 class EstudianteResponse(EstudianteBase):
     id_estudiante: int
     esta_activo: bool
+    fecha_creacion: datetime
     programa: ProgramaAcademicoResponse 
 
     class Config:
@@ -123,6 +125,8 @@ class PostulacionResponse(BaseModel):
     estado_actual: EstadoPostulacionEnum
     estudiante: EstudianteResponse
     vacante: VacanteResponse
+    fecha_inicio_practica: Optional[datetime] = None
+    fecha_fin_practica: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -169,3 +173,13 @@ class HistorialEstadoResponse(HistorialEstadoBase):
 class UserMeResponse(BaseModel):
     user_data: Union[UsuarioUniversidadResponse, EstudianteResponse, EmpresaResponse]
     user_type: str # Añadimos un campo extra para facilitar la vida al frontend
+
+# schema para aprobacion
+class AprobacionAdminInput(BaseModel):
+    fecha_inicio_practica: datetime
+    fecha_fin_practica: datetime
+    comentarios: Optional[str] = None
+
+# Para que se sepa como enviar comentarios
+class RechazoInput(BaseModel):
+    comentarios: Optional[str] = None

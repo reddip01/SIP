@@ -78,22 +78,34 @@ def aprobar_postulacion_empresa(
 @router.patch("/postulaciones/{postulacion_id}/rechazar", response_model=schemas.PostulacionResponse)
 def rechazar_postulacion_empresa(
     postulacion_id: int,
+    # ¡CAMBIO 1! Aceptamos el nuevo schema
+    datos_rechazo: schemas.RechazoInput,
     db: Session = Depends(database.get_db),
     current_empresa: models.Empresa = Depends(security.get_current_empresa_user)
 ):
     """
     [EMPRESA] Rechaza una postulación.
-    Cambia el estado a 'Rechazada por Empresa'.
-    (Protegido: Solo Empresa)
+    Cambia el estado a 'Rechazada por Empresa' y guarda un comentario en el historial.
     """
     postulacion = db.get(models.Postulacion, postulacion_id)
     if not postulacion:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Postulación no encontrada.")
-    
+
     if postulacion.vacante.id_empresa != current_empresa.id_empresa:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tiene permisos sobre esta postulación.")
 
+    # ¡CAMBIO 2! Actualizamos el estado
     postulacion.estado_actual = models.EstadoPostulacionEnum.Rechazada_por_Empresa.value
+
+    # ¡CAMBIO 3! Creamos el registro en el historial
+    historial = models.HistorialEstadoPostulacion(
+        id_postulacion=postulacion_id,
+        estado=models.EstadoPostulacionEnum.Rechazada_por_Empresa,
+        id_actor_empresa=current_empresa.id_empresa, # Guardamos QUÉ empresa rechazó
+        comentarios=datos_rechazo.comentarios       # Guardamos POR QUÉ
+    )
+    db.add(historial)
+
     db.commit()
     db.refresh(postulacion)
     return postulacion

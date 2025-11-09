@@ -46,7 +46,7 @@ class ProgramaAcademico(Base):
     id_programa = Column(Integer, primary_key=True, index=True)
     nombre_programa = Column(String(150), nullable=False, unique=True)
     facultad = Column(String(100), nullable=False)
-
+    esta_activo = Column(Boolean, default=True, nullable=False)
     # Relación: Un programa tiene muchos estudiantes
     estudiantes = relationship("Estudiante", back_populates="programa")
 
@@ -61,6 +61,8 @@ class Empresa(Base):
     descripcion = Column(Text, nullable=True)
     hashed_password = Column(String, nullable=False)
     esta_activo = Column(Boolean, default=True, nullable=False)
+    esta_activo = Column(Boolean, default=True, nullable=False)
+    fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
     # Relación: Una empresa tiene muchas vacantes
     vacantes = relationship("Vacante", back_populates="empresa")
 
@@ -89,9 +91,9 @@ class Estudiante(Base):
     apellido = Column(String(100), nullable=False)
     email_institucional = Column(String(100), nullable=False, unique=True, index=True)
     esta_activo = Column(Boolean, default=True, nullable=False)
-    # Campo para la contraseña hasheada (¡IMPORTANTE!)
-    # También necesario para el login del estudiante.
     hashed_password = Column(String, nullable=False)
+    esta_activo = Column(Boolean, default=True, nullable=False)
+    fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relación: Un estudiante pertenece a un programa
     programa = relationship("ProgramaAcademico", back_populates="estudiantes")
@@ -123,6 +125,8 @@ class Postulacion(Base):
     id_vacante = Column(Integer, ForeignKey("vacantes.id_vacante", ondelete="CASCADE"), nullable=False)
     fecha_postulacion = Column(DateTime(timezone=True), server_default=func.now())
     estado_actual = Column(Enum(EstadoPostulacionEnum, native_enum=False), nullable=False, default=EstadoPostulacionEnum.Recibida)
+    fecha_inicio_practica = Column(DateTime(timezone=True), nullable=True)
+    fecha_fin_practica = Column(DateTime(timezone=True), nullable=True)
 
     # Relación: Una postulación es de un estudiante
     estudiante = relationship("Estudiante", back_populates="postulaciones")
@@ -155,10 +159,14 @@ class HistorialEstadoPostulacion(Base):
     id_postulacion = Column(Integer, ForeignKey("postulaciones.id_postulacion", ondelete="CASCADE"), nullable=False)
     estado = Column(Enum(EstadoPostulacionEnum, native_enum=False), nullable=False)
     fecha_cambio = Column(DateTime(timezone=True), server_default=func.now())
-    id_usuario_universidad = Column(Integer, ForeignKey("usuarios_universidad.id_usuario", ondelete="SET NULL"), nullable=True)
     comentarios = Column(Text, nullable=True)
-
+    id_actor_universidad = Column(Integer, ForeignKey("usuarios_universidad.id_usuario", ondelete="SET NULL"), nullable=True)
+    id_actor_empresa = Column(Integer, ForeignKey("empresas.id_empresa", ondelete="SET NULL"), nullable=True)
+    id_actor_estudiante = Column(Integer, ForeignKey("estudiantes.id_estudiante", ondelete="SET NULL"), nullable=True)
+    
     # Relación: Un historial pertenece a una postulación
     postulacion = relationship("Postulacion", back_populates="historial_estados")
     # Relación: Un historial es gestionado por un usuario de U
     usuario_universidad = relationship("UsuarioUniversidad", back_populates="historiales_gestionados")
+    empresa = relationship("Empresa") # Nueva relación simple
+    estudiante = relationship("Estudiante") # Nueva relación simple
