@@ -164,3 +164,30 @@ def get_postulaciones_por_estudiante(db: Session, estudiante_id: int) -> List[mo
         .filter(models.Postulacion.id_estudiante == estudiante_id)\
         .order_by(models.Postulacion.fecha_postulacion.desc())\
         .all()
+
+# Listar las empresas en el panel admin
+
+def get_empresas(db: Session) -> List[models.Empresa]:
+    """
+    [ADMIN] Obtiene una lista de todas las empresas registradas.
+    """
+    return db.query(models.Empresa).order_by(models.Empresa.razon_social).all()
+
+# funcion para activar e inactivar estudiantes
+def get_estudiantes(db: Session) -> List[models.Estudiante]:
+    """
+    [ADMIN] Obtiene una lista de todos los estudiantes registrados.
+    Carga la información de su programa.
+    """
+    return db.query(models.Estudiante)\
+        .options(joinedload(models.Estudiante.programa))\
+        .order_by(models.Estudiante.apellido)\
+        .all()
+
+# listar los programas
+
+def get_programas(db: Session) -> List[models.ProgramaAcademico]:
+    """
+    [ADMIN] Obtiene una lista de todos los programas académicos.
+    """
+    return db.query(models.ProgramaAcademico).order_by(models.ProgramaAcademico.nombre_programa).all()

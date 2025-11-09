@@ -247,3 +247,123 @@ def rechazar_postulacion_admin(
     db.commit()
     db.refresh(postulacion)
     return postulacion
+
+# Listar las empresas existentes.
+
+@router.get("/empresas", response_model=List[schemas.EmpresaResponse])
+def get_all_empresas(
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Obtiene una lista de todas las empresas registradas en el sistema.
+    (Protegido: Solo Admin/Coordinador)
+    """
+    return crud.get_empresas(db=db)
+
+# endpoints para activar e inactivar empresas
+
+@router.patch("/empresas/{empresa_id}/activar", response_model=schemas.EmpresaResponse)
+def activar_empresa(
+    empresa_id: int,
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Activa una empresa (esta_activo = True).
+    (Protegido: Solo Admin/Coordinador)
+    """
+    empresa = db.get(models.Empresa, empresa_id)
+    if not empresa:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Empresa no encontrada.")
+
+    empresa.esta_activo = True
+    db.commit()
+    db.refresh(empresa)
+    return empresa
+
+
+@router.patch("/empresas/{empresa_id}/inactivar", response_model=schemas.EmpresaResponse)
+def inactivar_empresa(
+    empresa_id: int,
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Inactiva una empresa (esta_activo = False).
+    (Protegido: Solo Admin/Coordinador)
+    """
+    empresa = db.get(models.Empresa, empresa_id)
+    if not empresa:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Empresa no encontrada.")
+
+    empresa.esta_activo = False
+    db.commit()
+    db.refresh(empresa)
+    return empresa
+
+# endpoints para activar e inactivar estudiantes
+
+@router.get("/estudiantes", response_model=List[schemas.EstudianteResponse])
+def get_all_estudiantes(
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Obtiene una lista de todos los estudiantes registrados.
+    (Protegido: Solo Admin/Coordinador)
+    """
+    return crud.get_estudiantes(db=db)
+
+
+@router.patch("/estudiantes/{estudiante_id}/activar", response_model=schemas.EstudianteResponse)
+def activar_estudiante(
+    estudiante_id: int,
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Activa un estudiante (esta_activo = True).
+    (Protegido: Solo Admin/Coordinador)
+    """
+    estudiante = db.get(models.Estudiante, estudiante_id)
+    if not estudiante:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Estudiante no encontrado.")
+
+    estudiante.esta_activo = True
+    db.commit()
+    db.refresh(estudiante)
+    return estudiante
+
+
+@router.patch("/estudiantes/{estudiante_id}/inactivar", response_model=schemas.EstudianteResponse)
+def inactivar_estudiante(
+    estudiante_id: int,
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Inactiva un estudiante (esta_activo = False).
+    (Protegido: Solo Admin/Coordinador)
+    """
+    estudiante = db.get(models.Estudiante, estudiante_id)
+    if not estudiante:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Estudiante no encontrado.")
+
+    estudiante.esta_activo = False
+    db.commit()
+    db.refresh(estudiante)
+    return estudiante
+
+# listar los programas
+
+@router.get("/programas", response_model=List[schemas.ProgramaAcademicoResponse])
+def get_all_programas(
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Obtiene una lista de todos los programas académicos.
+    (Protegido: Solo Admin/Coordinador)
+    """
+    return crud.get_programas(db=db)

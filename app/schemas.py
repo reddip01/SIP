@@ -44,6 +44,7 @@ class EmpresaCreate(EmpresaBase):
 
 class EmpresaResponse(EmpresaBase):
     id_empresa: int
+    esta_activo: bool
 
     class Config:
         from_attributes = True
@@ -79,7 +80,7 @@ class EstudianteCreate(EstudianteBase):
 
 class EstudianteResponse(EstudianteBase):
     id_estudiante: int
-    # ¡Ahora incluimos la info del programa!
+    esta_activo: bool
     programa: ProgramaAcademicoResponse 
 
     class Config:

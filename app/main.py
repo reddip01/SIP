@@ -44,3 +44,4 @@ app.include_router(estudiantes.router, prefix="/api/estudiantes", tags=["Estudia
 @app.get("/")
 def read_root():
     return {"mensaje": "Bienvenido a la API del Sistema Integrado de Prácticas"}
+

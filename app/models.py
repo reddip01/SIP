@@ -1,5 +1,5 @@
 from sqlalchemy import (Column, Integer, String, Text, ForeignKey, 
-                        DateTime, Enum, UniqueConstraint)
+                        DateTime, Enum, UniqueConstraint, Boolean)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
@@ -25,6 +25,7 @@ class EstadoVacanteEnum(str, enum.Enum):
     Abierta = "Abierta"
     Cerrada = "Cerrada"
     En_Proceso = "En Proceso"
+    Cubierta = "Cubierta"
 
 class RolUniversidadEnum(str, enum.Enum):
     Coordinador = "Coordinador"
@@ -59,6 +60,7 @@ class Empresa(Base):
     email_contacto = Column(String(100), nullable=False, unique=True)
     descripcion = Column(Text, nullable=True)
     hashed_password = Column(String, nullable=False)
+    esta_activo = Column(Boolean, default=True, nullable=False)
     # Relación: Una empresa tiene muchas vacantes
     vacantes = relationship("Vacante", back_populates="empresa")
 
@@ -86,7 +88,7 @@ class Estudiante(Base):
     nombre = Column(String(100), nullable=False)
     apellido = Column(String(100), nullable=False)
     email_institucional = Column(String(100), nullable=False, unique=True, index=True)
-
+    esta_activo = Column(Boolean, default=True, nullable=False)
     # Campo para la contraseña hasheada (¡IMPORTANTE!)
     # También necesario para el login del estudiante.
     hashed_password = Column(String, nullable=False)
