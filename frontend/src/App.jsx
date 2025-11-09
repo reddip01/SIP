@@ -1,6 +1,9 @@
 // src/App.jsx
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+
+// Importa todas tus páginas "padre"
 import LoginPage from './LoginPage';
 import DashboardAdmin from './DashboardAdmin';
 import DashboardEmpresa from './DashboardEmpresa';
@@ -8,69 +11,131 @@ import DashboardEstudiante from './DashboardEstudiante';
 
 const API_URL = 'http://192.168.1.12:8000';
 
+// Función para obtener el token del localStorage
+const getAuthToken = () => localStorage.getItem('sip_token');
+
 function App() {
-  // Estado para guardar el token y el tipo de usuario
-  const [token, setToken] = useState(localStorage.getItem('sip_token'));
+  const [token, setToken] = useState(getAuthToken());
   const [userType, setUserType] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate(); // Hook para redirigir
 
-  // Este 'useEffect' se ejecuta CADA VEZ que el 'token' cambia
+  // Este useEffect se ejecuta UNA VEZ al cargar la app
+  // para verificar si ya existe un token válido.
   useEffect(() => {
     const fetchUserRole = async () => {
       if (token) {
         try {
-          // 3. Usamos el token para llamar a /api/auth/me
           const response = await axios.get(`${API_URL}/api/auth/me`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-
-          // 4. Guardamos el rol del usuario
           setUserType(response.data.user_type);
-
         } catch (error) {
-          console.error("Error al verificar el token:", error);
-          // Si el token es inválido (ej. expiró), lo borramos
+          console.error("Token inválido:", error);
           localStorage.removeItem('sip_token');
           setToken(null);
         }
       }
       setLoading(false);
     };
-
     fetchUserRole();
-  }, [token]); // Depende del token
+  }, []); // El array vacío [] asegura que se ejecute solo al inicio
 
-
-  // Función que pasaremos a LoginPage para que nos "avise" del login
-  const handleLoginSuccess = (newToken) => {
-    // 1. El usuario hizo login, guardamos el token
+  
+  // Esta función se llama desde LoginPage
+  const handleLoginSuccess = async (newToken) => {
     localStorage.setItem('sip_token', newToken);
-    // 2. Actualizamos el estado, lo que dispara el 'useEffect' de arriba
-    setToken(newToken); 
+    setToken(newToken);
+    
+    // Inmediatamente después de hacer login, verificamos el rol y redirigimos
+    try {
+      const response = await axios.get(`${API_URL}/api/auth/me`, {
+        headers: { 'Authorization': `Bearer ${newToken}` }
+      });
+      const type = response.data.user_type;
+      setUserType(type);
+      
+      // --- ¡REDIRECCIÓN POR ROL! ---
+      if (type === 'admin') navigate('/admin');
+      if (type === 'empresa') navigate('/empresa');
+      if (type === 'estudiante') navigate('/estudiante');
+
+    } catch (error) {
+      console.error("Error al verificar token post-login:", error);
+      handleLogout(); // Si falla, limpiamos todo
+    }
   };
 
-  // --- LÓGICA DE RENDERIZADO ---
+  // Esta función se pasará a los dashboards
+  const handleLogout = () => {
+    localStorage.removeItem('sip_token');
+    setToken(null);
+    setUserType(null);
+    navigate('/'); // Redirige al login
+  };
 
   if (loading) {
     return <div>Cargando...</div>;
   }
 
-  // Si tenemos token Y tipo de usuario, mostramos el Dashboard correcto
-  if (token && userType) {
-    if (userType === 'admin') {
-      return <DashboardAdmin />;
-    }
-    if (userType === 'empresa') {
-      return <DashboardEmpresa />;
-    }
-    if (userType === 'estudiante') {
-      return <DashboardEstudiante />;
-    }
-  }
-
-  // Si no hay token, mostramos el Login
-  // Pasamos la función 'handleLoginSuccess' como un "prop"
-  return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  // --- DEFINICIÓN DE RUTAS ---
+  return (
+    <Routes>
+      {/* Ruta de Login (Pública) */}
+      <Route 
+        path="/" 
+        element={
+          !token ? <LoginPage onLoginSuccess={handleLoginSuccess} /> : <Navigate to="/" />
+        } 
+      />
+      
+      {/* Rutas Protegidas de Admin */}
+      <Route 
+        path="/admin/*" 
+        element={
+          token && userType === 'admin' ? 
+          <DashboardAdmin handleLogout={handleLogout} /> : 
+          <Navigate to="/" />
+        } 
+      />
+      
+      {/* Rutas Protegidas de Empresa */}
+      <Route 
+        path="/empresa/*" 
+        element={
+          token && userType === 'empresa' ? 
+          <DashboardEmpresa handleLogout={handleLogout} /> : 
+          <Navigate to="/" />
+        } 
+      />
+      
+      {/* Rutas Protegidas de Estudiante */}
+      <Route 
+        path="/estudiante/*" 
+        element={
+          token && userType === 'estudiante' ? 
+          <DashboardEstudiante handleLogout={handleLogout} /> : 
+          <Navigate to="/" />
+        } 
+      />
+      
+      {/* Si el usuario está logueado pero va a '/', lo redirigimos */}
+      <Route 
+        path="/" 
+        element={
+          token ? 
+          (userType === 'admin' ? <Navigate to="/admin" /> :
+           userType === 'empresa' ? <Navigate to="/empresa" /> :
+           userType === 'estudiante' ? <Navigate to="/estudiante" /> :
+           <LoginPage onLoginSuccess={handleLoginSuccess} />) :
+          <LoginPage onLoginSuccess={handleLoginSuccess} />
+        }
+      />
+      
+      {/* Cualquier otra ruta vuelve al login */}
+      <Route path="*" element={<Navigate to="/" />} />
+    </Routes>
+  );
 }
 
 export default App;

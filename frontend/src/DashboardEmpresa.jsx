@@ -3,12 +3,10 @@ import React from 'react';
 import EmpresaVacantes from './EmpresaVacantes';
 import EmpresaPostulaciones from './EmpresaPostulaciones';
 
-function DashboardEmpresa() {
-  const handleLogout = () => {
-    localStorage.removeItem('sip_token');
-    window.location.reload();
-  };
-
+// 1. Aceptar { handleLogout } como prop
+function DashboardEmpresa({ handleLogout }) {
+  
+  // 2. Usar la función en el botón
   return (
     <div style={{ padding: '2rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -16,14 +14,10 @@ function DashboardEmpresa() {
         <button onClick={handleLogout}>Cerrar Sesión</button>
       </div>
       <p>Gestión de vacantes y candidatos.</p>
-
+      
       <hr />
-      {/* Aquí cargamos las postulaciones pendientes (Candidatos) */}
       <EmpresaPostulaciones />
-
       <hr style={{ marginTop: '2rem' }} />
-
-      {/* Aquí cargamos la lista de "Nuestras Vacantes" */}
       <EmpresaVacantes />
     </div>
   );

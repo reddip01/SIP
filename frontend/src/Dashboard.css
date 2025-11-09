@@ -1,0 +1,168 @@
+/* src/Dashboard.css */
+
+/* --- Estructura Principal del Layout --- */
+.dashboard-layout {
+  display: grid;
+  /* Define una columna de 240px para la sidebar y el resto para el contenido */
+  grid-template-columns: 240px 1fr;
+  /* Define una fila de 60px para el header y el resto para el contenido */
+  grid-template-rows: 60px 1fr;
+  grid-template-areas:
+    "sidebar header"
+    "sidebar main";
+  height: 100vh;
+  width: 100vw;
+  /* Resetea el 'body' para que no interfiera con el grid */
+  background-color: #f0f2f5; 
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* --- 1. Barra Superior (Header) --- */
+.header {
+  grid-area: header;
+  background-color: #5a0c47; /* Tono morado oscuro del mockup */
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header-user {
+  font-weight: 600;
+}
+
+.logout-button {
+  background-color: #f8f9fa;
+  color: #5a0c47;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+.logout-button:hover {
+  background-color: #e2e6ea;
+}
+
+/* --- 2. Barra Lateral (Sidebar) --- */
+.sidebar {
+  grid-area: sidebar;
+  background-color: #ffffff; /* Sidebar clara como el mockup de Admin */
+  padding: 1rem;
+  border-right: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #333;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.sidebar-nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-nav li {
+  margin-bottom: 0.5rem;
+}
+
+/* Estilo de los links de navegación */
+.sidebar-nav a {
+  display: block;
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.sidebar-nav a:hover,
+.sidebar-nav a.active {
+  background-color: #e9ecef;
+  color: #000;
+}
+
+/* --- 3. Contenido Principal --- */
+.main-content {
+  grid-area: main;
+  background-color: #f0f2f5; /* Fondo gris claro */
+  padding: 2rem;
+  overflow-y: auto; /* Permite scroll si el contenido es largo */
+}
+
+.main-content h2,
+.main-content h3 {
+  color: #333;
+  border-bottom: 2px solid #5a0c47;
+  padding-bottom: 0.5rem;
+}
+
+/* Contenedor blanco para las tablas */
+.content-card {
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+}
+
+/* --- Estilos para Tablas y Botones --- */
+.main-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.main-content th,
+.main-content td {
+  border: 1px solid #ddd;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.main-content th {
+  background-color: #f8f9fa;
+}
+
+.main-content button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 5px;
+  font-size: 0.9rem;
+}
+
+.main-content button:hover {
+  background-color: #0056b3;
+}
+
+/* Botón de rechazar (rojo) */
+.main-content button.btn-danger {
+  background-color: #dc3545;
+}
+.main-content button.btn-danger:hover {
+  background-color: #c82333;
+}
+
+.error-message {
+  color: #d93025;
+}

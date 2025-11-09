@@ -51,26 +51,30 @@ function EstudianteVacantes() {
         <p>No hay vacantes disponibles en este momento.</p>
       ) : (
         <table border="1" style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
+            <thead>
             <tr>
-              <th>Título</th>
-              <th>Descripción</th>
-              <th>Acción</th>
+                <th>Empresa</th>
+                <th>Título</th>
+                <th>Descripción</th>
+                <th>Acción</th>
             </tr>
-          </thead>
-          <tbody>
+            </thead>
+            <tbody>
             {vacantes.map((v) => (
-              <tr key={v.id_vacante}>
+                <tr key={v.id_vacante}>
+                {/* --- CAMBIOS AQUÍ --- */}
+                <td>{v.empresa.razon_social}</td>
                 <td>{v.titulo_vacante}</td>
+                {/* --- FIN DE CAMBIOS --- */}
                 <td>{v.descripcion_funciones}</td>
                 <td>
-                  <button onClick={() => handlePostular(v.id_vacante)}>
+                    <button onClick={() => handlePostular(v.id_vacante)}>
                     Postularse
-                  </button>
+                    </button>
                 </td>
-              </tr>
+                </tr>
             ))}
-          </tbody>
+            </tbody>
         </table>
       )}
     </div>

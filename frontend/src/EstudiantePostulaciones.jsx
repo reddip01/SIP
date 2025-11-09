@@ -34,22 +34,24 @@ function EstudiantePostulaciones() {
         <p>No te has postulado a ninguna vacante.</p>
       ) : (
         <table border="1" style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
+            <thead>
             <tr>
-              <th>ID Postulación</th>
-              <th>ID Vacante</th>
-              <th>Estado Actual</th>
+                <th>ID Postulación</th>
+                <th>Empresa</th>
+                <th>Título de la Vacante</th>
+                <th>Estado Actual</th>
             </tr>
-          </thead>
-          <tbody>
+            </thead>
+            <tbody>
             {postulaciones.map((post) => (
-              <tr key={post.id_postulacion}>
+                <tr key={post.id_postulacion}>
                 <td>{post.id_postulacion}</td>
-                <td>{post.id_vacante}</td>
+                <td>{post.vacante.empresa.razon_social}</td>
+                <td>{post.vacante.titulo_vacante}</td>
                 <td>{post.estado_actual}</td>
-              </tr>
+                </tr>
             ))}
-          </tbody>
+            </tbody>
         </table>
       )}
     </div>

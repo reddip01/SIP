@@ -67,31 +67,29 @@ function AdminVacantes() {
         <table border="1" style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Título</th>
-              <th>Descripción</th>
-              <th>Estado</th>
-              <th>Acciones</th>
+            <th>Empresa</th>
+            <th>Título de la Vacante</th>
+            <th>Estado</th>
+            <th>Acciones</th>
             </tr>
           </thead>
-          <tbody>
+            <tbody>
             {vacantes.map((vacante) => (
-              <tr key={vacante.id_vacante}>
-                <td>{vacante.id_vacante}</td>
+                <tr key={vacante.id_vacante}>
+                <td>{vacante.empresa.razon_social}</td>
                 <td>{vacante.titulo_vacante}</td>
-                <td>{vacante.descripcion_funciones}</td>
                 <td>{vacante.estado}</td>
                 <td>
-                  <button onClick={() => handleAprobar(vacante.id_vacante)}>
+                    <button onClick={() => handleAprobar(vacante.id_vacante)}>
                     Aprobar
-                  </button>
-                  <button onClick={() => handleRechazar(vacante.id_vacante)}>
+                    </button>
+                    <button onClick={() => handleRechazar(vacante.id_vacante)} className="btn-danger">
                     Rechazar
-                  </button>
+                    </button>
                 </td>
-              </tr>
+                </tr>
             ))}
-          </tbody>
+            </tbody>
         </table>
       )}
     </div>

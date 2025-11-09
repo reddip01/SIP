@@ -1,3 +1,4 @@
+from __future__ import annotations
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List, Union
 from datetime import datetime
@@ -78,8 +79,8 @@ class EstudianteCreate(EstudianteBase):
 
 class EstudianteResponse(EstudianteBase):
     id_estudiante: int
-    # Podríamos anidar la info del programa si quisiéramos
-    # programa: ProgramaAcademicoResponse 
+    # ¡Ahora incluimos la info del programa!
+    programa: ProgramaAcademicoResponse 
 
     class Config:
         from_attributes = True
@@ -99,8 +100,8 @@ class VacanteResponse(VacanteBase):
     id_vacante: int
     id_empresa: int
     fecha_publicacion: datetime
-    # Opcionalmente, anidar info de la empresa
-    # empresa: EmpresaResponse
+    # ¡Ahora incluimos la info de la empresa!
+    empresa: EmpresaResponse
 
     class Config:
         from_attributes = True
@@ -115,10 +116,12 @@ class PostulacionBase(BaseModel):
 class PostulacionCreate(PostulacionBase):
     pass # Los IDs son suficientes para crear
 
-class PostulacionResponse(PostulacionBase):
+class PostulacionResponse(BaseModel):
     id_postulacion: int
     fecha_postulacion: datetime
     estado_actual: EstadoPostulacionEnum
+    estudiante: EstudianteResponse
+    vacante: VacanteResponse
 
     class Config:
         from_attributes = True

@@ -63,31 +63,31 @@ function EmpresaPostulaciones() {
         <p>No tienes candidatos pendientes.</p>
       ) : (
         <table border="1" style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
+            <thead>
             <tr>
-              <th>ID Postulación</th>
-              <th>ID Estudiante</th>
-              <th>ID Vacante</th>
-              <th>Acciones</th>
+                <th>ID Postulación</th>
+                <th>Estudiante</th>
+                <th>Título de la Vacante</th>
+                <th>Acciones</th>
             </tr>
-          </thead>
+            </thead>
           <tbody>
-            {postulaciones.map((post) => (
-              <tr key={post.id_postulacion}>
-                <td>{post.id_postulacion}</td>
-                <td>{post.id_estudiante}</td>
-                <td>{post.id_vacante}</td>
-                <td>
-                  <button onClick={() => handleAprobar(post.id_postulacion)}>
-                    Aprobar
-                  </button>
-                  <button onClick={() => handleRechazar(post.id_postulacion)}>
-                    Rechazar
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
+        {postulaciones.map((post) => (
+            <tr key={post.id_postulacion}>
+            <td>{post.id_postulacion}</td>
+            <td>{post.estudiante.nombre} {post.estudiante.apellido}</td>
+            <td>{post.vacante.titulo_vacante}</td>
+            <td>
+                <button onClick={() => handleAprobar(post.id_postulacion)}>
+                Aprobar
+                </button>
+                <button onClick={() => handleRechazar(post.id_postulacion)} className="btn-danger">
+                Rechazar
+                </button>
+            </td>
+            </tr>
+        ))}
+        </tbody>
         </table>
       )}
     </div>

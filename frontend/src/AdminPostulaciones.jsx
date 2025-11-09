@@ -64,33 +64,33 @@ function AdminPostulaciones() {
         <p>No hay postulaciones pendientes.</p>
       ) : (
         <table border="1" style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
+            <thead>
             <tr>
-              <th>ID Postulación</th>
-              <th>ID Estudiante</th>
-              <th>ID Vacante</th>
-              <th>Estado Actual</th>
-              <th>Acciones</th>
+                <th>ID Postulación</th>
+                <th>Estudiante</th>
+                <th>Vacante</th>
+                <th>Estado Actual</th>
+                <th>Acciones</th>
             </tr>
-          </thead>
+            </thead>
           <tbody>
             {postulaciones.map((post) => (
-              <tr key={post.id_postulacion}>
+            <tr key={post.id_postulacion}>
                 <td>{post.id_postulacion}</td>
-                <td>{post.id_estudiante}</td>
-                <td>{post.id_vacante}</td>
+                <td>{post.estudiante.nombre} {post.estudiante.apellido}</td>
+                <td>{post.vacante.titulo_vacante}</td>
                 <td>{post.estado_actual}</td>
                 <td>
-                  <button onClick={() => handleAprobar(post.id_postulacion)}>
+                <button onClick={() => handleAprobar(post.id_postulacion)}>
                     Aprobar (Final)
-                  </button>
-                  <button onClick={() => handleRechazar(post.id_postulacion)}>
+                </button>
+                <button onClick={() => handleRechazar(post.id_postulacion)} className="btn-danger">
                     Rechazar (Final)
-                  </button>
+                </button>
                 </td>
-              </tr>
+            </tr>
             ))}
-          </tbody>
+            </tbody>
         </table>
       )}
     </div>
