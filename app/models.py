@@ -12,13 +12,12 @@ class EstadoPostulacionEnum(str, enum.Enum):
     Recibida = "Recibida"
     En_Revision_Empresa = "En Revisión Empresa" 
     En_Revision_Universidad = "En Revisión Universidad" 
-    
-    # Nuevos estados de rechazo
     Rechazada_por_Empresa = "Rechazada por Empresa"
     Rechazada_por_Universidad = "Rechazada por Universidad"
-
     Aprobada = "Aprobada"
-    Rechazada = "Rechazada" 
+    Cancelada = "Cancelada"
+    Rechazada = "Rechazada"
+
 
 class EstadoVacanteEnum(str, enum.Enum):
     En_Revision = "En Revisión"

@@ -157,13 +157,22 @@ class HistorialEstadoBase(BaseModel):
 
 class HistorialEstadoCreate(HistorialEstadoBase):
     id_postulacion: int
-    id_usuario_universidad: Optional[int] = None # El admin que hace el cambio
-
-class HistorialEstadoResponse(HistorialEstadoBase):
+    # El ID del actor se manejará en el backend, no se envía desde el frontend
+    
+    
+# --- REEMPLAZA TU HistorialEstadoPostulacionResponse POR ESTE ---
+class HistorialEstadoPostulacionResponse(BaseModel):
     id_historial: int
     id_postulacion: int
+    estado: EstadoPostulacionEnum
     fecha_cambio: datetime
-    id_usuario_universidad: Optional[int] = None
+    comentarios: Optional[str] = None
+    
+    # --- ¡DATOS DEL ACTOR! ---
+    # Incluimos los objetos completos para saber QUIÉN hizo el comentario
+    usuario_universidad: Optional[UsuarioUniversidadResponse] = None
+    empresa: Optional[EmpresaResponse] = None
+    estudiante: Optional[EstudianteResponse] = None
 
     class Config:
         from_attributes = True
@@ -183,3 +192,12 @@ class AprobacionAdminInput(BaseModel):
 # Para que se sepa como enviar comentarios
 class RechazoInput(BaseModel):
     comentarios: Optional[str] = None
+
+# Para el manejo de comentarios e historial
+
+class ComentarioCreate(BaseModel):
+    comentarios: str # El comentario es obligatorio
+
+class FechasPracticaUpdate(BaseModel):
+    fecha_inicio_practica: datetime
+    fecha_fin_practica: datetime

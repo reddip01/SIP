@@ -79,7 +79,7 @@ def aprobar_postulacion_empresa(
 def rechazar_postulacion_empresa(
     postulacion_id: int,
     # ¡CAMBIO 1! Aceptamos el nuevo schema
-    datos_rechazo: schemas.RechazoInput,
+    datos_rechazo: schemas.ComentarioCreate,
     db: Session = Depends(database.get_db),
     current_empresa: models.Empresa = Depends(security.get_current_empresa_user)
 ):

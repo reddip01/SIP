@@ -191,3 +191,82 @@ def get_programas(db: Session) -> List[models.ProgramaAcademico]:
     [ADMIN] Obtiene una lista de todos los programas académicos.
     """
     return db.query(models.ProgramaAcademico).order_by(models.ProgramaAcademico.nombre_programa).all()
+
+# traer practicas activas y finalizadas
+
+def get_practicas_activas_y_finalizadas(db: Session) -> List[models.Postulacion]:
+    """
+    [ADMIN] Obtiene una lista de todas las prácticas Aprobadas o Cubiertas.
+    Carga toda la información anidada para seguimiento.
+    """
+    estados_finalizados = [
+        models.EstadoPostulacionEnum.Aprobada.value,
+        models.EstadoPostulacionEnum.Rechazada_por_Empresa.value,
+        models.EstadoPostulacionEnum.Rechazada_por_Universidad.value
+    ]
+
+    return db.query(models.Postulacion)\
+        .options(
+            joinedload(models.Postulacion.estudiante)
+                .joinedload(models.Estudiante.programa),
+            joinedload(models.Postulacion.vacante)
+                .joinedload(models.Vacante.empresa)
+        )\
+        .filter(
+            models.Postulacion.estado_actual.in_(estados_finalizados)
+        )\
+        .order_by(models.Postulacion.fecha_postulacion.desc())\
+        .all()
+
+# para traer los comentarios por postulacion
+
+def get_historial_por_postulacion(db: Session, postulacion_id: int) -> List[models.HistorialEstadoPostulacion]:
+    """
+    Obtiene el historial completo de una postulación, cargando
+    la info del actor (admin, empresa, o estudiante) que hizo el cambio.
+    """
+    return db.query(models.HistorialEstadoPostulacion)\
+        .options(
+            joinedload(models.HistorialEstadoPostulacion.usuario_universidad),
+            joinedload(models.HistorialEstadoPostulacion.empresa),
+            joinedload(models.HistorialEstadoPostulacion.estudiante)
+        )\
+        .filter(models.HistorialEstadoPostulacion.id_postulacion == postulacion_id)\
+        .order_by(models.HistorialEstadoPostulacion.fecha_cambio.asc())\
+        .all()
+
+# crear un comentario en el historial
+
+def create_historial_comentario(
+    db: Session, 
+    postulacion: models.Postulacion, 
+    comentario: str, 
+    actor: models.UsuarioUniversidad | models.Empresa | models.Estudiante
+) -> models.HistorialEstadoPostulacion:
+    """
+    Crea una nueva entrada en el historial (solo un comentario, no un cambio de estado).
+    Determina qué tipo de actor (admin, empresa, estudiante) lo está creando.
+    """
+    actor_data = {
+        "id_actor_universidad": None,
+        "id_actor_empresa": None,
+        "id_actor_estudiante": None
+    }
+
+    if isinstance(actor, models.UsuarioUniversidad):
+        actor_data["id_actor_universidad"] = actor.id_usuario
+    elif isinstance(actor, models.Empresa):
+        actor_data["id_actor_empresa"] = actor.id_empresa
+    elif isinstance(actor, models.Estudiante):
+        actor_data["id_actor_estudiante"] = actor.id_estudiante
+
+    historial_entry = models.HistorialEstadoPostulacion(
+        id_postulacion=postulacion.id_postulacion,
+        estado=models.EstadoPostulacionEnum(postulacion.estado_actual), # Mantiene el estado actual
+        comentarios=comentario,
+        **actor_data
+    )
+    db.add(historial_entry)
+    db.commit()
+    db.refresh(historial_entry)
+    return historial_entry

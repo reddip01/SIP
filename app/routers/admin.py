@@ -248,8 +248,8 @@ def aprobar_postulacion_admin(
 @router.patch("/postulaciones/{postulacion_id}/rechazar", response_model=schemas.PostulacionResponse)
 def rechazar_postulacion_admin(
     postulacion_id: int,
-    # ¡CAMBIO 1! Aceptamos el nuevo schema
-    datos_rechazo: schemas.RechazoInput, 
+    datos_rechazo: schemas.ComentarioCreate,
+
     db: Session = Depends(database.get_db),
     current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
 ):
@@ -437,3 +437,53 @@ def inactivar_programa(
     db.commit()
     db.refresh(programa)
     return programa
+
+# para traer las practicas activas y finalizadas
+
+@router.get("/practicas/historial", response_model=List[schemas.PostulacionResponse])
+def get_historial_practicas(
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Obtiene un historial de todas las prácticas activas,
+    completadas o rechazadas (procesos finalizados).
+    (Protegido: Solo Admin/Coordinador)
+    """
+    return crud.get_practicas_activas_y_finalizadas(db=db)
+
+# cancelacion de una practica
+
+@router.patch("/postulaciones/{postulacion_id}/cancelar", response_model=schemas.PostulacionResponse)
+def cancelar_practica(
+    postulacion_id: int,
+    datos_cancelacion: schemas.ComentarioCreate, # Reusamos el schema de comentarios
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Cancela una práctica que ya estaba 'Aprobada'.
+    Guarda un comentario en el historial.
+    """
+    postulacion = db.get(models.Postulacion, postulacion_id)
+    if not postulacion:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Postulación no encontrada.")
+
+    # Lógica de negocio: Solo se pueden cancelar prácticas que estaban Aprobadas
+    if postulacion.estado_actual != models.EstadoPostulacionEnum.Aprobada.value:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Solo se pueden cancelar prácticas que ya están 'Aprobadas'.")
+
+    postulacion.estado_actual = models.EstadoPostulacionEnum.Cancelada.value
+
+    # Guardamos el motivo en el historial
+    historial = models.HistorialEstadoPostulacion(
+        id_postulacion=postulacion_id,
+        estado=models.EstadoPostulacionEnum.Cancelada,
+        id_actor_universidad=current_admin.id_usuario,
+        comentarios=datos_cancelacion.comentarios
+    )
+    db.add(historial)
+
+    db.commit()
+    db.refresh(postulacion)
+    return postulacion

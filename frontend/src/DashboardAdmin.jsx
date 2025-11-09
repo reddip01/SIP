@@ -10,6 +10,7 @@ import AdminAprobaciones from './AdminAprobaciones';
 import AdminGestionEmpresas from './AdminGestionEmpresas';
 import AdminGestionEstudiantes from './AdminGestionEstudiantes';
 import AdminGestionProgramas from './AdminGestionProgramas';
+import AdminSeguimiento from './AdminSeguimiento';
 
 // 3. Aceptar 'handleLogout' como prop desde App.jsx
 function DashboardAdmin({ handleLogout }) {
@@ -31,6 +32,7 @@ function DashboardAdmin({ handleLogout }) {
           {/* 5. Cambiar <a> por <Link> de react-router-dom */}
           <li><Link to="/admin/dashboard">Dashboard</Link></li>
           <li><Link to="/admin/aprobaciones">Aprobaciones</Link></li>
+          <li><Link to="/admin/seguimiento">Seguimiento</Link></li>
           <li><Link to="/admin/empresas">Gestionar Empresas</Link></li>
           <li><Link to="/admin/estudiantes">Gestionar Estudiantes</Link></li>
           <li><Link to="/admin/programas">Gestionar Programas</Link></li>
@@ -43,6 +45,7 @@ function DashboardAdmin({ handleLogout }) {
         <Routes>
           <Route path="dashboard" element={<AdminDashboardView />} />
           <Route path="aprobaciones" element={<AdminAprobaciones />} />
+          <Route path="seguimiento" element={<AdminSeguimiento />} />
           <Route path="empresas" element={<AdminGestionEmpresas />} />
           <Route path="estudiantes" element={<AdminGestionEstudiantes />} />
           <Route path="programas" element={<AdminGestionProgramas />} />
