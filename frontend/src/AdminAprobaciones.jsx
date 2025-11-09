@@ -1,14 +1,24 @@
 // src/AdminAprobaciones.jsx
 import React from 'react';
+import AdminVacantes from './AdminVacantes';
+import AdminPostulaciones from './AdminPostulaciones';
 
 function AdminAprobaciones() {
-  // Por ahora es solo un placeholder
-  // En el futuro, podría ser una copia de AdminDashboardView
   return (
-    <div className="content-card">
-      <h2>Aprobaciones</h2>
-      <p>Esta sección mostrará todas las vacantes y postulaciones pendientes.</p>
-    </div>
+    <>
+      <h2>Gestión de Aprobaciones</h2>
+      <p>Gestione las vacantes y postulaciones pendientes.</p>
+
+      <div className="content-card">
+        {/* Componente de vacantes pendientes */}
+        <AdminVacantes />
+      </div>
+
+      <div className="content-card">
+        {/* Componente de postulaciones pendientes */}
+        <AdminPostulaciones />
+      </div>
+    </>
   );
 }
 export default AdminAprobaciones;
