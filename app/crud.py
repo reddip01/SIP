@@ -270,3 +270,28 @@ def create_historial_comentario(
     db.commit()
     db.refresh(historial_entry)
     return historial_entry
+
+# Seguimiento practicas por empresa.
+
+def get_practicas_finalizadas_por_empresa(db: Session, empresa_id: int) -> List[models.Postulacion]:
+    """
+    [EMPRESA] Obtiene un historial de todas las prácticas Aprobadas,
+    Canceladas o Rechazadas asociadas a sus vacantes.
+    """
+    estados_finalizados = [
+        models.EstadoPostulacionEnum.Aprobada.value,
+        models.EstadoPostulacionEnum.Cancelada.value,
+        models.EstadoPostulacionEnum.Rechazada_por_Empresa.value,
+        models.EstadoPostulacionEnum.Rechazada_por_Universidad.value
+    ]
+
+    return db.query(models.Postulacion)\
+        .join(models.Vacante)\
+        .filter(models.Vacante.id_empresa == empresa_id)\
+        .filter(models.Postulacion.estado_actual.in_(estados_finalizados))\
+        .options(
+            joinedload(models.Postulacion.estudiante),
+            joinedload(models.Postulacion.vacante) # Ya no necesitamos cargar la empresa de nuevo
+        )\
+        .order_by(models.Postulacion.fecha_postulacion.desc())\
+        .all()

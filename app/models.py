@@ -16,6 +16,8 @@ class EstadoPostulacionEnum(str, enum.Enum):
     Rechazada_por_Universidad = "Rechazada por Universidad"
     Aprobada = "Aprobada"
     Cancelada = "Cancelada"
+    Completada_por_Empresa = "Completada por Empresa"
+    Completada_Final = "Completada (Final)"
     Rechazada = "Rechazada"
 
 

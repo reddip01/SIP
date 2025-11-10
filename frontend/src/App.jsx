@@ -94,7 +94,7 @@ function App() {
         path="/admin/*" 
         element={
           token && userType === 'admin' ? 
-          <DashboardAdmin handleLogout={handleLogout} /> : 
+          <DashboardAdmin handleLogout={handleLogout} userType={userType} /> :
           <Navigate to="/" />
         } 
       />
@@ -104,7 +104,7 @@ function App() {
         path="/empresa/*" 
         element={
           token && userType === 'empresa' ? 
-          <DashboardEmpresa handleLogout={handleLogout} /> : 
+          <DashboardEmpresa handleLogout={handleLogout} userType={userType} /> :
           <Navigate to="/" />
         } 
       />
@@ -114,7 +114,7 @@ function App() {
         path="/estudiante/*" 
         element={
           token && userType === 'estudiante' ? 
-          <DashboardEstudiante handleLogout={handleLogout} /> : 
+          <DashboardEstudiante handleLogout={handleLogout} userType={userType} /> :
           <Navigate to="/" />
         } 
       />

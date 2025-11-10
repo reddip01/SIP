@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from './api';
 
-function EstudianteVacantes() {
+function EstudianteBuscarVacantesView() {
   const [vacantes, setVacantes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -80,4 +80,4 @@ function EstudianteVacantes() {
     </div>
   );
 }
-export default EstudianteVacantes;
+export default EstudianteBuscarVacantesView;

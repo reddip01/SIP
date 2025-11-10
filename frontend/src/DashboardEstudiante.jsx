@@ -1,23 +1,53 @@
 // src/DashboardEstudiante.jsx
 import React from 'react';
-import EstudianteVacantes from './EstudianteVacantes';
-import EstudiantePostulaciones from './EstudiantePostulaciones';
+import { Routes, Route, Link, Navigate } from 'react-router-dom';
+import './Dashboard.css'; // <-- ¡Usamos el mismo CSS!
 
-// 1. Aceptar { handleLogout } como prop
-function DashboardEstudiante({ handleLogout }) {
+// Importamos las 3 "vistas"
+import EstudianteDashboardView from './EstudianteDashboardView';
+import EstudianteMisPostulacionesView from './EstudianteMisPostulacionesView';
+import EstudianteBuscarVacantesView from './EstudianteBuscarVacantesView';
 
-  // 2. Usar la función en el botón
+function DashboardEstudiante({ handleLogout, userType }) {
+
   return (
-    <div style={{ padding: '2rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Dashboard del Estudiante</h1>
-        <button onClick={handleLogout}>Cerrar Sesión</button>
-      </div>
-      
-      <hr />
-      <EstudiantePostulaciones />
-      <hr style={{ marginTop: '2rem' }} />
-      <EstudianteVacantes />
+    <div className="dashboard-layout">
+
+      {/* --- BARRA SUPERIOR (HEADER) --- */}
+      <header className="header" style={{ backgroundColor: '#0056b3' }}>
+        <div className="header-user">
+          Panel de Estudiante
+        </div>
+        <button onClick={handleLogout} className="logout-button">
+          Cerrar Sesión
+        </button>
+      </header>
+
+      {/* --- BARRA LATERAL (SIDEBAR) --- */}
+      <nav className="sidebar">
+        <div className="sidebar-header">
+          Plataforma SIP
+        </div>
+        {/* Links del mockup  */}
+        <ul className="sidebar-nav">
+          <li><Link to="/estudiante/dashboard">Dashboard</Link></li>
+          <li><Link to="/estudiante/postulaciones">Mis Postulaciones</Link></li>
+          <li><Link to="/estudiante/vacantes">Buscar Vacantes</Link></li>
+        </ul>
+      </nav>
+
+      {/* --- CONTENIDO PRINCIPAL --- */}
+      <main className="main-content">
+        <Routes>
+          <Route path="dashboard" element={<EstudianteDashboardView />} />
+          <Route path="postulaciones" element={<EstudianteMisPostulacionesView userType={userType} />} />
+          <Route path="vacantes" element={<EstudianteBuscarVacantesView userType={userType} />} />
+
+          {/* Ruta por defecto para /estudiante/ */}
+          <Route index element={<Navigate to="dashboard" />} />
+        </Routes>
+      </main>
+
     </div>
   );
 }

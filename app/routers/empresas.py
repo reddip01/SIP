@@ -109,3 +109,115 @@ def rechazar_postulacion_empresa(
     db.commit()
     db.refresh(postulacion)
     return postulacion
+
+# para cerrar una vacante
+
+@router.patch("/vacantes/{vacante_id}/cerrar", response_model=schemas.VacanteResponse)
+def cerrar_vacante_empresa(
+    vacante_id: int,
+    db: Session = Depends(database.get_db),
+    current_empresa: models.Empresa = Depends(security.get_current_empresa_user)
+):
+    """
+    [EMPRESA] Cierra manualmente una vacante (la marca como 'Cerrada').
+    (Protegido: Solo Empresa)
+    """
+    vacante = db.get(models.Vacante, vacante_id)
+    if not vacante:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vacante no encontrada.")
+
+    # Seguridad: Asegurarse de que esta empresa sea dueña de la vacante
+    if vacante.id_empresa != current_empresa.id_empresa:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tiene permisos sobre esta vacante.")
+
+    # Solo se pueden cerrar vacantes que estén 'Abierta' o 'En Revisión'
+    if vacante.estado not in [models.EstadoVacanteEnum.Abierta.value, models.EstadoVacanteEnum.En_Revision.value]:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La vacante ya está finalizada (Cubierta o Cerrada).")
+
+    vacante.estado = models.EstadoVacanteEnum.Cerrada.value
+    db.commit()
+    db.refresh(vacante)
+    return vacante
+
+# router practicas por empresa
+
+@router.get("/practicas/seguimiento", response_model=List[schemas.PostulacionResponse])
+def get_seguimiento_practicas_empresa(
+    db: Session = Depends(database.get_db),
+    current_empresa: models.Empresa = Depends(security.get_current_empresa_user)
+):
+    """
+    [EMPRESA] Obtiene un historial de todas las prácticas (Aprobadas, Canceladas, etc.)
+    para seguimiento.
+    (Protegido: Solo Empresa)
+    """
+    return crud.get_practicas_finalizadas_por_empresa(db=db, empresa_id=current_empresa.id_empresa)
+
+# flujo para completar las practicas por una empresa
+
+@router.patch("/postulaciones/{postulacion_id}/completar", response_model=schemas.PostulacionResponse)
+def completar_practica_empresa(
+    postulacion_id: int,
+    comentario: schemas.ComentarioCreate, # Requerimos un comentario
+    db: Session = Depends(database.get_db),
+    current_empresa: models.Empresa = Depends(security.get_current_empresa_user)
+):
+    """
+    [EMPRESA] Marca una práctica como 'Completada por Empresa'.
+    Requiere un comentario (ej. "El estudiante finalizó satisfactoriamente").
+    """
+    postulacion = db.get(models.Postulacion, postulacion_id)
+    if not postulacion or postulacion.vacante.id_empresa != current_empresa.id_empresa:
+        raise HTTPException(status_code=403, detail="No tiene permisos sobre esta postulación.")
+
+    # Solo se pueden completar prácticas Aprobadas
+    if postulacion.estado_actual != models.EstadoPostulacionEnum.Aprobada.value:
+        raise HTTPException(status_code=400, detail="Solo se pueden completar prácticas 'Aprobadas'.")
+
+    postulacion.estado_actual = models.EstadoPostulacionEnum.Completada_por_Empresa.value
+
+    # Guardamos el comentario en el historial
+    historial = models.HistorialEstadoPostulacion(
+        id_postulacion=postulacion_id,
+        estado=models.EstadoPostulacionEnum.Completada_por_Empresa,
+        id_actor_empresa=current_empresa.id_empresa,
+        comentarios=comentario.comentarios
+    )
+    db.add(historial)
+
+    db.commit()
+    db.refresh(postulacion)
+    return postulacion
+
+
+@router.patch("/postulaciones/{postulacion_id}/cancelar", response_model=schemas.PostulacionResponse)
+def cancelar_practica_empresa(
+    postulacion_id: int,
+    comentario: schemas.ComentarioCreate, # Requerimos un comentario
+    db: Session = Depends(database.get_db),
+    current_empresa: models.Empresa = Depends(security.get_current_empresa_user)
+):
+    """
+    [EMPRESA] Cancela una práctica 'Aprobada'.
+    Requiere un comentario (ej. "El estudiante no cumplió con las expectativas").
+    """
+    postulacion = db.get(models.Postulacion, postulacion_id)
+    if not postulacion or postulacion.vacante.id_empresa != current_empresa.id_empresa:
+        raise HTTPException(status_code=403, detail="No tiene permisos sobre esta postulación.")
+
+    if postulacion.estado_actual != models.EstadoPostulacionEnum.Aprobada.value:
+        raise HTTPException(status_code=400, detail="Solo se pueden cancelar prácticas 'Aprobadas'.")
+
+    postulacion.estado_actual = models.EstadoPostulacionEnum.Cancelada.value
+
+    historial = models.HistorialEstadoPostulacion(
+        id_postulacion=postulacion_id,
+        estado=models.EstadoPostulacionEnum.Cancelada,
+        id_actor_empresa=current_empresa.id_empresa,
+        comentarios=comentario.comentarios
+    )
+    db.add(historial)
+
+    db.commit()
+    db.refresh(postulacion)
+    return postulacion

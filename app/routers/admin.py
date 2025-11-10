@@ -487,3 +487,37 @@ def cancelar_practica(
     db.commit()
     db.refresh(postulacion)
     return postulacion
+
+# flujo apra finalizacion de practicas
+
+@router.patch("/postulaciones/{postulacion_id}/finalizar", response_model=schemas.PostulacionResponse)
+def finalizar_practica_admin(
+    postulacion_id: int,
+    comentario: schemas.ComentarioCreate, # Requerimos un comentario
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Da la aprobación final a una práctica 'Completada por Empresa'.
+    """
+    postulacion = db.get(models.Postulacion, postulacion_id)
+    if not postulacion:
+        raise HTTPException(status_code=404, detail="Postulación no encontrada.")
+
+    # El admin solo puede finalizar lo que la empresa ya marcó
+    if postulacion.estado_actual != models.EstadoPostulacionEnum.Completada_por_Empresa.value:
+        raise HTTPException(status_code=400, detail="La práctica debe ser marcada como 'Completada por Empresa' primero.")
+
+    postulacion.estado_actual = models.EstadoPostulacionEnum.Completada_Final.value
+
+    historial = models.HistorialEstadoPostulacion(
+        id_postulacion=postulacion_id,
+        estado=models.EstadoPostulacionEnum.Completada_Final,
+        id_actor_universidad=current_admin.id_usuario,
+        comentarios=comentario.comentarios
+    )
+    db.add(historial)
+
+    db.commit()
+    db.refresh(postulacion)
+    return postulacion

@@ -2,18 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from './api';
 
-function DetallePostulacionModal({ postulacion, onClose }) {
+// ¡ACTUALIZADO! Aceptamos userType para saber qué botones mostrar
+function DetallePostulacionModal({ postulacion, onClose, userType }) {
   const [historial, setHistorial] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // --- NUEVO: Estados para los formularios de edición ---
+  
+  // Estados para los formularios
   const [comentario, setComentario] = useState("");
-  const [fechaInicio, setFechaInicio] = useState(postulacion.fecha_inicio_practica || "");
-  const [fechaFin, setFechaFin] = useState(postulacion.fecha_fin_practica || "");
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [fechaFin, setFechaFin] = useState("");
   const [formError, setFormError] = useState(null);
 
-  // --- Cargar el historial (sin cambios) ---
+  // --- Cargar el historial ---
   const fetchHistorial = async () => {
     if (!postulacion) return;
     setLoading(true);
@@ -30,29 +31,28 @@ function DetallePostulacionModal({ postulacion, onClose }) {
 
   useEffect(() => {
     fetchHistorial();
-    // Seteamos las fechas cuando la postulación cambia
+    // Seteamos las fechas (usamos .split('T')[0] para que el input type="date" lo entienda)
     setFechaInicio(postulacion.fecha_inicio_practica ? postulacion.fecha_inicio_practica.split('T')[0] : "");
     setFechaFin(postulacion.fecha_fin_practica ? postulacion.fecha_fin_practica.split('T')[0] : "");
   }, [postulacion]);
 
-  // --- NUEVO: Formulario para Añadir Comentario ---
+  // --- Formulario para Añadir Comentario (Para todos los roles) ---
   const handleSubmitComentario = async (e) => {
     e.preventDefault();
     if (comentario.trim() === "") return;
-
     try {
       await apiClient.post(
         `/api/postulaciones/${postulacion.id_postulacion}/comentarios`, 
         { comentarios: comentario }
       );
-      setComentario(""); // Limpiamos el input
+      setComentario(""); 
       fetchHistorial(); // Recargamos el historial
     } catch (err) {
       setFormError("No se pudo guardar el comentario.");
     }
   };
 
-  // --- NUEVO: Formulario para Editar Fechas ---
+  // --- Funciones del ADMIN ---
   const handleUpdateFechas = async (e) => {
     e.preventDefault();
     try {
@@ -63,28 +63,58 @@ function DetallePostulacionModal({ postulacion, onClose }) {
           fecha_fin_practica: new Date(fechaFin).toISOString()
         }
       );
-      alert("Fechas actualizadas. Cierre y vuelva a abrir el modal para ver los cambios.");
-      // (Una solución más avanzada usaría state management para no recargar)
+      alert("Fechas actualizadas.");
       onClose(); 
     } catch (err) {
       setFormError("Error al actualizar fechas. Asegúrese de que la práctica esté 'Aprobada'.");
     }
   };
 
-  // --- NUEVO: Formulario para Cancelar Práctica ---
-  const handleCancelarPractica = async () => {
-    const motivo = prompt("Motivo de la cancelación (Este comentario se guardará en el historial):");
+  const handleCancelarAdmin = async () => {
+    const motivo = prompt("Motivo de la cancelación (Admin):");
     if (!motivo || motivo.trim() === "") return;
-
     try {
       await apiClient.patch(
-        `/api/postulaciones/${postulacion.id_postulacion}/cancelar`,
-        { comentarios: motivo } // Reusamos el schema de Comentario
+        `/api/admin/postulaciones/${postulacion.id_postulacion}/cancelar`,
+        { comentarios: motivo }
       );
-      alert("Práctica cancelada. Cierre y vuelva a abrir el modal para ver los cambios.");
-      onClose(); // Cerramos el modal
+      alert("Práctica cancelada.");
+      onClose(); 
     } catch (err) {
       setFormError(err.response?.data?.detail || "Error al cancelar la práctica.");
+    }
+  };
+  
+  // (Añadiremos la finalización del Admin después)
+
+  // --- Funciones de la EMPRESA ---
+  const handleCancelarEmpresa = async () => {
+    const motivo = prompt("Motivo de la cancelación (Empresa):");
+    if (!motivo || motivo.trim() === "") return;
+    try {
+      await apiClient.patch(
+        `/api/empresas/postulaciones/${postulacion.id_postulacion}/cancelar`,
+        { comentarios: motivo }
+      );
+      alert("Práctica cancelada por la empresa.");
+      onClose();
+    } catch (err) {
+      setFormError(err.response?.data?.detail || "Error al cancelar la práctica.");
+    }
+  };
+
+  const handleCompletarEmpresa = async () => {
+    const motivo = prompt("Comentario de finalización (Empresa):");
+    if (motivo === null) return; // Canceló
+    try {
+      await apiClient.patch(
+        `/api/empresas/postulaciones/${postulacion.id_postulacion}/completar`,
+        { comentarios: motivo || "Completada por la empresa." }
+      );
+      alert("Práctica marcada como 'Completada por Empresa'.");
+      onClose();
+    } catch (err) {
+      setFormError(err.response?.data?.detail || "Error al marcar como completada.");
     }
   };
 
@@ -96,47 +126,32 @@ function DetallePostulacionModal({ postulacion, onClose }) {
     return "Sistema";
   };
 
-  // --- RENDERIZADO (ACTUALIZADO CON LOS NUEVOS FORMULARIOS) ---
+  // --- RENDERIZADO (¡ACTUALIZADO!) ---
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose} style={styles.closeButton}>X</button>
         <h2>Detalles de la Práctica (ID: {postulacion.id_postulacion})</h2>
-
+        
         {formError && <p className="error-message">{formError}</p>}
 
-        {/* --- SECCIÓN 1: Información General (con Fechas Editables) --- */}
+        {/* --- SECCIÓN 1: Info General (Se muestra a todos) --- */}
         <div style={styles.infoSection}>
           <h4>Información General</h4>
           <p><strong>Estudiante:</strong> {postulacion.estudiante.nombre} {postulacion.estudiante.apellido}</p>
           <p><strong>Empresa:</strong> {postulacion.vacante.empresa.razon_social}</p>
           <p><strong>Estado Actual:</strong> {postulacion.estado_actual}</p>
-
-          <form onSubmit={handleUpdateFechas} style={styles.inlineForm}>
-            <div style={styles.formGroup}>
-              <label>Fecha Inicio:</label>
-              <input 
-                type="date" 
-                value={fechaInicio}
-                onChange={(e) => setFechaInicio(e.target.value)}
-              />
-            </div>
-            <div style={styles.formGroup}>
-              <label>Fecha Fin:</label>
-              <input 
-                type="date" 
-                value={fechaFin}
-                onChange={(e) => setFechaFin(e.target.value)}
-              />
-            </div>
-            <button type="submit">Actualizar Fechas</button>
-          </form>
+          {postulacion.fecha_inicio_practica && (
+            <p><strong>Fecha Inicio:</strong> {new Date(postulacion.fecha_inicio_practica).toLocaleDateString()}</p>
+          )}
+          {postulacion.fecha_fin_practica && (
+            <p><strong>Fecha Fin:</strong> {new Date(postulacion.fecha_fin_practica).toLocaleDateString()}</p>
+          )}
         </div>
 
-        {/* --- SECCIÓN 2: Historial (sin cambios) --- */}
+        {/* --- SECCIÓN 2: Historial (Se muestra a todos) --- */}
         <div style={styles.infoSection}>
           <h4>Historial de Seguimiento (Comentarios)</h4>
-          {/* ... (código de historial, loading, map, etc. - no cambia) ... */}
           {loading && <p>Cargando historial...</p>}
           {error && <p className="error-message">{error}</p>}
           {!loading && historial.length === 0 && <p>Aún no hay comentarios.</p>}
@@ -152,7 +167,7 @@ function DetallePostulacionModal({ postulacion, onClose }) {
           </div>
         </div>
 
-        {/* --- SECCIÓN 3: Añadir Comentario (sin cambios) --- */}
+        {/* --- SECCIÓN 3: Añadir Comentario (Se muestra a todos) --- */}
         <div style={styles.infoSection}>
           <h4>Añadir Seguimiento</h4>
           <form onSubmit={handleSubmitComentario}>
@@ -167,20 +182,49 @@ function DetallePostulacionModal({ postulacion, onClose }) {
           </form>
         </div>
 
-        {/* --- SECCIÓN 4: Acciones de Admin (Cancelar) --- */}
-        {postulacion.estado_actual === 'Aprobada' && (
+        {/* --- ¡ACTUALIZADO! SECCIÓN 4: Acciones del ADMIN --- */}
+        {userType === 'admin' && (
           <div style={styles.infoSection}>
             <h4>Acciones de Administrador</h4>
-            <button onClick={handleCancelarPractica} className="btn-danger">
-              Cancelar Práctica (Inactivar)
+            <form onSubmit={handleUpdateFechas} style={styles.inlineForm}>
+              <div style={styles.formGroup}>
+                <label>Fecha Inicio:</label>
+                <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} />
+              </div>
+              <div style={styles.formGroup}>
+                <label>Fecha Fin:</label>
+                <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} />
+              </div>
+              <button type="submit">Actualizar Fechas</button>
+            </form>
+            
+            {/* Botón de Cancelar (Admin) */}
+            {postulacion.estado_actual === 'Aprobada' && (
+              <button onClick={handleCancelarAdmin} className="btn-danger" style={{ marginTop: '1rem' }}>
+                Cancelar Práctica (Admin)
+              </button>
+            )}
+            {/* (Aquí irá el botón de 'Completada (Final)' del Admin) */}
+          </div>
+        )}
+        
+        {/* --- ¡NUEVO! SECCIÓN 5: Acciones de la EMPRESA --- */}
+        {userType === 'empresa' && postulacion.estado_actual === 'Aprobada' && (
+          <div style={styles.infoSection}>
+            <h4>Acciones de Empresa</h4>
+            <button onClick={handleCompletarEmpresa}>
+              Marcar como Completada
+            </button>
+            <button onClick={handleCancelarEmpresa} className="btn-danger" style={{ marginLeft: '1rem' }}>
+              Cancelar Práctica (Empresa)
             </button>
           </div>
         )}
+
       </div>
     </div>
   );
 }
-
 // --- ESTILOS (Añadimos estilos para los nuevos formularios) ---
 const styles = {
   overlay: {
@@ -202,18 +246,17 @@ const styles = {
     borderBottom: '1px solid #eee',
     paddingBottom: '1.5rem',
   },
-  // --- NUEVOS ESTILOS ---
   inlineForm: {
     display: 'flex',
     gap: '1rem',
     alignItems: 'flex-end',
     marginTop: '1rem',
+    flexWrap: 'wrap', // Para que sea responsive
   },
   formGroup: {
     display: 'flex',
     flexDirection: 'column',
   },
-  // --- FIN NUEVOS ESTILOS ---
   historialFeed: {
     maxHeight: '300px', overflowY: 'auto',
     border: '1px solid #eee', padding: '1rem', borderRadius: '4px',

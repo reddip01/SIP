@@ -103,7 +103,7 @@ class VacanteResponse(VacanteBase):
     id_vacante: int
     id_empresa: int
     fecha_publicacion: datetime
-    # ¡Ahora incluimos la info de la empresa!
+    estado: EstadoVacanteEnum
     empresa: EmpresaResponse
 
     class Config:

@@ -1,20 +1,22 @@
-// src/AdminSeguimiento.jsx
+// src/EmpresaSeguimientoView.jsx
 import React, { useState, useEffect } from 'react';
 import apiClient from './api';
-import DetallePostulacionModal from './DetallePostulacionModal'; // <-- 1. IMPORTAR EL MODAL
+import DetallePostulacionModal from './DetallePostulacionModal'; // <-- ¡Reusamos el modal!
 
-function AdminSeguimiento({ userType }) {
+function EmpresaSeguimientoView({ userType }) {
   const [postulaciones, setPostulaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // --- 2. ESTADO PARA EL MODAL ---
+  // Estado para controlar el modal de detalles
   const [postulacionSeleccionada, setPostulacionSeleccionada] = useState(null);
 
-  const fetchHistorial = async () => {
+  // Cargar el historial de la empresa
+  const fetchHistorialEmpresa = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/admin/practicas/historial');
+      // 1. Llamamos al nuevo endpoint de empresa
+      const response = await apiClient.get('/api/empresas/practicas/seguimiento');
       setPostulaciones(response.data);
       setError(null);
     } catch (err) {
@@ -25,10 +27,9 @@ function AdminSeguimiento({ userType }) {
   };
 
   useEffect(() => {
-    fetchHistorial();
+    fetchHistorialEmpresa();
   }, []);
 
-  // 3. Función que se llama desde la tabla
   const handleVerDetalles = (postulacion) => {
     setPostulacionSeleccionada(postulacion);
   };
@@ -38,22 +39,19 @@ function AdminSeguimiento({ userType }) {
   if (error) return <p className="error-message">{error}</p>;
 
   return (
-    // 4. Usamos un fragmento <> para que el modal flote sobre la tabla
     <>
       <div className="content-card">
-        <h2>Seguimiento de Prácticas (Historial)</h2>
-        <p>Un registro de todas las postulaciones que han completado su ciclo.</p>
+        <h2>Seguimiento de Prácticas</h2>
+        <p>Un registro de todas las prácticas activas o finalizadas asociadas a tu empresa.</p>
 
         {postulaciones.length === 0 ? (
-          <p>Aún no hay prácticas finalizadas (aprobadas o rechazadas).</p>
+          <p>Aún no tienes prácticas activas o finalizadas.</p>
         ) : (
           <table>
-            {/* ... (el <thead> de la tabla no cambia) ... */}
             <thead>
               <tr>
                 <th>ID</th>
                 <th>Estudiante</th>
-                <th>Empresa</th>
                 <th>Vacante</th>
                 <th>Estado Final</th>
                 <th>Acciones</th>
@@ -64,15 +62,13 @@ function AdminSeguimiento({ userType }) {
                 <tr key={post.id_postulacion}>
                   <td>{post.id_postulacion}</td>
                   <td>{post.estudiante.nombre} {post.estudiante.apellido}</td>
-                  <td>{post.vacante.empresa.razon_social}</td>
                   <td>{post.vacante.titulo_vacante}</td>
                   <td style={{ fontWeight: 'bold', color: post.estado_actual === 'Aprobada' ? 'green' : 'red' }}>
                     {post.estado_actual}
                   </td>
                   <td>
-                    {/* 5. Actualizamos el botón para que pase el objeto 'post' */}
                     <button onClick={() => handleVerDetalles(post)}>
-                      Ver Detalles
+                      Ver Detalles / Comentar
                     </button>
                   </td>
                 </tr>
@@ -82,17 +78,16 @@ function AdminSeguimiento({ userType }) {
         )}
       </div>
 
-      {/* 6. RENDERIZADO CONDICIONAL DEL MODAL */}
-      {/* Si 'postulacionSeleccionada' no es null, muestra el modal */}
+      {/* ¡Reutilizamos el mismo modal de detalles del Admin! */}
       {postulacionSeleccionada && (
         <DetallePostulacionModal 
           postulacion={postulacionSeleccionada}
           onClose={() => setPostulacionSeleccionada(null)}
-          userType={userType} // Función para cerrar
+          userType={userType}
         />
       )}
     </>
   );
 }
 
-export default AdminSeguimiento;
+export default EmpresaSeguimientoView;
