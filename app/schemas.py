@@ -208,9 +208,16 @@ class PasswordChangeInput(BaseModel):
     old_password: str  # La contraseña actual (para verificar)
     new_password: str  # La contraseña nueva
 
-# estadisticas
+# estadisticas para admin
 
 class StatsAdminResponse(BaseModel):
     practicas_por_aprobar: int
     estudiantes_activos: int
     empresas_activas: int
+
+# estadisticas para estudiante
+
+class StatsEstudianteResponse(BaseModel):
+    postulaciones_activas: int
+    vacantes_disponibles: int
+    mensajes_nuevos: int

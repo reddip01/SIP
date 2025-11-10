@@ -7,6 +7,7 @@ import './Dashboard.css'; // <-- 1. ¡USAMOS EL MISMO CSS DEL ADMIN!
 import EmpresaDashboardView from './EmpresaDashboardView';
 import EmpresaCandidatosView from './EmpresaCandidatosView';
 import EmpresaSeguimientoView from './EmpresaSeguimientoView';
+import PerfilPagina from './PerfilPagina';
 
 // 3. Aceptamos 'handleLogout'
 function DashboardEmpresa({ handleLogout, userType }) {
@@ -35,7 +36,7 @@ function DashboardEmpresa({ handleLogout, userType }) {
           <li><Link to="/empresa/vacantes">Gestión de Vacantes</Link></li>
           <li><Link to="/empresa/candidatos">Candidatos</Link></li>
           <li><Link to="/empresa/seguimiento">Seguimiento</Link></li>
-          <li><Link to="#">Perfil de Empresa</Link></li>
+          <li><Link to="/empresa/perfil">Perfil de Empresa</Link></li>
         </ul>
       </nav>
 
@@ -46,7 +47,7 @@ function DashboardEmpresa({ handleLogout, userType }) {
           <Route path="vacantes" element={<EmpresaDashboardView />} />
           <Route path="candidatos" element={<EmpresaCandidatosView />} />
           <Route path="seguimiento" element={<EmpresaSeguimientoView userType={userType} />} />
-          <Route path="perfil" element={<h2>Perfil de Empresa (en construcción)</h2>} />
+          <Route path="perfil" element={<PerfilPagina />} />
           
 
           {/* Ruta por defecto para /empresa/ */}

@@ -6,6 +6,19 @@ from .. import crud, schemas, database, security, models
 
 router = APIRouter()
 
+# estadisticas para estudiantes
+
+@router.get("/stats", response_model=schemas.StatsEstudianteResponse)
+def get_estudiante_statistics(
+    db: Session = Depends(database.get_db),
+    current_student: models.Estudiante = Depends(security.get_current_student_user)
+):
+    """
+    [ESTUDIANTE] Obtiene las estadísticas clave (KPIs) para el dashboard.
+    (Protegido: Solo Estudiante)
+    """
+    return crud.get_estudiante_stats(db=db, estudiante_id=current_student.id_estudiante)
+
 # postulaciones por estudiante
 @router.get("/postulaciones/me", response_model=List[schemas.PostulacionResponse])
 def get_mis_postulaciones(

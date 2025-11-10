@@ -328,3 +328,51 @@ def get_admin_stats(db: Session) -> schemas.StatsAdminResponse:
         estudiantes_activos=estudiantes_activos,
         empresas_activas=empresas_activas
     )
+
+# estadisticas para estudiantes
+
+def get_estudiante_stats(db: Session, estudiante_id: int) -> schemas.StatsEstudianteResponse:
+    """
+    [ESTUDIANTE] Obtiene las estadísticas (KPIs) para el dashboard del estudiante.
+    """
+
+    # 1. Definir qué es una postulación "activa"
+    estados_activos = [
+        models.EstadoPostulacionEnum.Recibida.value,
+        models.EstadoPostulacionEnum.En_Revision_Empresa.value,
+        models.EstadoPostulacionEnum.En_Revision_Universidad.value,
+        models.EstadoPostulacionEnum.Aprobada.value
+    ]
+
+    # 2. Contar postulaciones activas
+    postulaciones_activas = db.query(models.Postulacion)\
+        .filter(models.Postulacion.id_estudiante == estudiante_id)\
+        .filter(models.Postulacion.estado_actual.in_(estados_activos))\
+        .count()
+
+    # 3. Contar vacantes disponibles (sin cambios)
+    vacantes_disponibles = db.query(models.Vacante)\
+        .filter(models.Vacante.estado == models.EstadoVacanteEnum.Abierta.value)\
+        .count()
+
+    # --- ¡LÓGICA NUEVA PARA MENSAJES! ---
+
+    # 4. Obtener los IDs de todas las postulaciones del estudiante
+    postulaciones_del_estudiante_ids = db.query(models.Postulacion.id_postulacion)\
+        .filter(models.Postulacion.id_estudiante == estudiante_id)\
+        .subquery()
+
+    # 5. Contar comentarios en esas postulaciones que NO sean del estudiante
+    mensajes_nuevos = db.query(models.HistorialEstadoPostulacion)\
+        .filter(models.HistorialEstadoPostulacion.id_postulacion.in_(postulaciones_del_estudiante_ids))\
+        .filter(models.HistorialEstadoPostulacion.id_actor_estudiante == None)\
+        .count()
+    # (Nota: En el futuro, podríamos hacer esto más complejo con un "visto/no visto",
+    # pero por ahora, esto cuenta todos los comentarios de seguimiento de Admins/Empresas)
+    # --- FIN DE LÓGICA NUEVA ---
+
+    return schemas.StatsEstudianteResponse(
+        postulaciones_activas=postulaciones_activas,
+        vacantes_disponibles=vacantes_disponibles,
+        mensajes_nuevos=mensajes_nuevos # <-- ¡Ahora es un número real!
+    )

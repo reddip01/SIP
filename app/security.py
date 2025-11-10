@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from . import schemas, models, database
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 # --- CONFIGURACIÓN DE JWT ---
 SECRET_KEY = "tu-clave-secreta-muy-larga-y-dificil-de-adivinar"
@@ -72,7 +72,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if user:
         return user
         
-    user = db.query(models.Estudiante).filter(models.Estudiante.email_institucional == token_data.email).first()
+    user = db.query(models.Estudiante).options(joinedload(models.Estudiante.programa)).filter(models.Estudiante.email_institucional == token_data.email).first()
     if user:
         return user
 
