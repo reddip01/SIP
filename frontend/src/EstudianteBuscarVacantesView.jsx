@@ -1,16 +1,16 @@
-// src/EstudianteVacantes.jsx
+// src/EstudianteBuscarVacantesView.jsx
 import React, { useState, useEffect } from 'react';
 import apiClient from './api';
 
-function EstudianteBuscarVacantesView() {
+function EstudianteBuscarVacantesView() { // No necesita userType, ¡correcto!
   const [vacantes, setVacantes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // --- Lógica (SIN CAMBIOS) ---
   const fetchVacantes = async () => {
     try {
       setLoading(true);
-      // Este endpoint ya existe y solo trae las "Abiertas"
       const response = await apiClient.get('/api/estudiantes/vacantes');
       setVacantes(response.data);
       setError(null);
@@ -27,11 +27,9 @@ function EstudianteBuscarVacantesView() {
 
   const handlePostular = async (vacanteId) => {
     try {
-      // Este endpoint también ya existe
       await apiClient.post(`/api/estudiantes/vacantes/${vacanteId}/postular`);
       alert('¡Postulación enviada con éxito!');
-      // Opcional: podrías recargar la lista o deshabilitar el botón
-      fetchVacantes(); // Recargamos por si acaso
+      fetchVacantes(); // Recargamos
     } catch (err) {
       if (err.response && err.response.data.detail) {
         alert(`Error: ${err.response.data.detail}`);
@@ -40,44 +38,47 @@ function EstudianteBuscarVacantesView() {
       }
     }
   };
+  // --- Fin Lógica ---
 
   if (loading) return <div>Cargando vacantes disponibles...</div>;
   if (error) return <p className="error-message">{error}</p>;
 
   return (
-    <div>
+    // --- ¡ESTE ES EL CAMBIO! ---
+    <div className="content-card"> 
       <h3>Buscar Vacantes</h3>
       {vacantes.length === 0 ? (
         <p>No hay vacantes disponibles en este momento.</p>
       ) : (
-        <table border="1" style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
+        <table>
+          {/* ... (la tabla <thead> y <tbody> no cambian) ... */}
+          <thead>
             <tr>
-                <th>Empresa</th>
-                <th>Título</th>
-                <th>Descripción</th>
-                <th>Acción</th>
+              <th>Empresa</th>
+              <th>Título</th>
+              <th>Descripción</th>
+              <th>Acción</th>
             </tr>
-            </thead>
-            <tbody>
+          </thead>
+          <tbody>
             {vacantes.map((v) => (
-                <tr key={v.id_vacante}>
-                {/* --- CAMBIOS AQUÍ --- */}
+              <tr key={v.id_vacante}>
                 <td>{v.empresa.razon_social}</td>
                 <td>{v.titulo_vacante}</td>
-                {/* --- FIN DE CAMBIOS --- */}
                 <td>{v.descripcion_funciones}</td>
                 <td>
-                    <button onClick={() => handlePostular(v.id_vacante)}>
+                  <button onClick={() => handlePostular(v.id_vacante)}>
                     Postularse
-                    </button>
+                  </button>
                 </td>
-                </tr>
+              </tr>
             ))}
-            </tbody>
+          </tbody>
         </table>
       )}
     </div>
+    // --- FIN DEL CAMBIO ---
   );
 }
+
 export default EstudianteBuscarVacantesView;

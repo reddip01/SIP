@@ -521,3 +521,16 @@ def finalizar_practica_admin(
     db.commit()
     db.refresh(postulacion)
     return postulacion
+
+# estadisticas
+
+@router.get("/stats", response_model=schemas.StatsAdminResponse)
+def get_admin_statistics(
+    db: Session = Depends(database.get_db),
+    current_admin: models.UsuarioUniversidad = Depends(security.get_current_admin_user)
+):
+    """
+    [ADMIN] Obtiene las estadísticas clave (KPIs) para el dashboard.
+    (Protegido: Solo Admin/Coordinador)
+    """
+    return crud.get_admin_stats(db=db)

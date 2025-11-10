@@ -1,58 +1,54 @@
 // src/EstudianteMisPostulacionesView.jsx
 import React, { useState, useEffect } from 'react';
 import apiClient from './api';
-import DetallePostulacionModal from './DetallePostulacionModal'; // <-- 1. IMPORTAR EL MODAL
+import DetallePostulacionModal from './DetallePostulacionModal';
 
-// 2. ACEPTAR userType (lo necesitamos para pasarlo al modal)
+// Aceptamos userType (¡esto ya lo tenías bien!)
 function EstudianteMisPostulacionesView({ userType }) { 
   const [postulaciones, setPostulaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // 3. AÑADIR ESTADO PARA EL MODAL
   const [postulacionSeleccionada, setPostulacionSeleccionada] = useState(null);
 
-  // Cargar las postulaciones (sin cambios)
+  // --- Lógica (SIN CAMBIOS) ---
+  const fetchMisPostulaciones = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get('/api/estudiantes/postulaciones/me');
+      setPostulaciones(response.data);
+      setError(null);
+    } catch (err) {
+      setError("No se pudieron cargar tus postulaciones.");
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchMisPostulaciones = async () => {
-      try {
-        setLoading(true);
-        const response = await apiClient.get('/api/estudiantes/postulaciones/me');
-        setPostulaciones(response.data);
-        setError(null);
-      } catch (err) {
-        setError("No se pudieron cargar tus postulaciones.");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchMisPostulaciones();
   }, []);
   
-  // 4. AÑADIR FUNCIÓN PARA ABRIR EL MODAL
   const handleVerDetalles = (postulacion) => {
     setPostulacionSeleccionada(postulacion);
   };
-
   const handleCloseModal = () => {
     setPostulacionSeleccionada(null);
-    // (Opcional: recargar datos si el modal pudiera cambiarlos)
+    fetchMisPostulaciones(); // Recargamos la lista por si hubo cambios
   };
-
+  // --- Fin Lógica ---
 
   if (loading) return <div>Cargando mis postulaciones...</div>;
   if (error) return <p className="error-message">{error}</p>;
 
   return (
-    // 5. Envolvemos todo en un fragmento <> y la tarjeta de contenido
     <>
-      <div className="content-card">
+      {/* --- ¡ESTE ES EL CAMBIO! --- */}
+      <div className="content-card"> 
         <h3>Mis Postulaciones</h3>
         {postulaciones.length === 0 ? (
           <p>No te has postulado a ninguna vacante.</p>
         ) : (
           <table>
-            {/* 6. AÑADIR LA COLUMNA "Acciones" */}
+            {/* ... (la tabla <thead> y <tbody> no cambian) ... */}
             <thead>
               <tr>
                 <th>ID Postulación</th>
@@ -71,7 +67,6 @@ function EstudianteMisPostulacionesView({ userType }) {
                   <td style={{ fontWeight: 'bold', color: post.estado_actual === 'Aprobada' ? 'green' : 'inherit' }}>
                     {post.estado_actual}
                   </td>
-                  {/* 7. AÑADIR EL BOTÓN */}
                   <td>
                     <button onClick={() => handleVerDetalles(post)}>
                       Ver Detalles
@@ -83,13 +78,14 @@ function EstudianteMisPostulacionesView({ userType }) {
           </table>
         )}
       </div>
+      {/* --- FIN DEL CAMBIO --- */}
 
-      {/* 8. RENDERIZAR EL MODAL */}
+      {/* El modal queda fuera de la tarjeta */}
       {postulacionSeleccionada && (
         <DetallePostulacionModal
           postulacion={postulacionSeleccionada}
           onClose={handleCloseModal}
-          userType={userType} // ¡Esto le dice al modal que eres "estudiante"!
+          userType={userType} // ¡Esto ya lo tenías bien!
         />
       )}
     </>

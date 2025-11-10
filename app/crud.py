@@ -295,3 +295,36 @@ def get_practicas_finalizadas_por_empresa(db: Session, empresa_id: int) -> List[
         )\
         .order_by(models.Postulacion.fecha_postulacion.desc())\
         .all()
+
+# estadisticas
+
+def get_admin_stats(db: Session) -> schemas.StatsAdminResponse:
+    """
+    [ADMIN] Obtiene las estadísticas (KPIs) para el dashboard principal.
+    """
+    # 1. Prácticas por Aprobar (Suma de vacantes PENDIENTES + postulaciones PENDIENTES)
+    vacantes_pendientes = db.query(models.Vacante)\
+        .filter(models.Vacante.estado == models.EstadoVacanteEnum.En_Revision.value)\
+        .count()
+
+    postulaciones_pendientes = db.query(models.Postulacion)\
+        .filter(models.Postulacion.estado_actual == models.EstadoPostulacionEnum.En_Revision_Universidad.value)\
+        .count()
+
+    practicas_por_aprobar = vacantes_pendientes + postulaciones_pendientes
+
+    # 2. Estudiantes Activos
+    estudiantes_activos = db.query(models.Estudiante)\
+        .filter(models.Estudiante.esta_activo == True)\
+        .count()
+
+    # 3. Empresas Activas (Verificadas)
+    empresas_activas = db.query(models.Empresa)\
+        .filter(models.Empresa.esta_activo == True)\
+        .count()
+
+    return schemas.StatsAdminResponse(
+        practicas_por_aprobar=practicas_por_aprobar,
+        estudiantes_activos=estudiantes_activos,
+        empresas_activas=empresas_activas
+    )

@@ -207,3 +207,10 @@ class FechasPracticaUpdate(BaseModel):
 class PasswordChangeInput(BaseModel):
     old_password: str  # La contraseña actual (para verificar)
     new_password: str  # La contraseña nueva
+
+# estadisticas
+
+class StatsAdminResponse(BaseModel):
+    practicas_por_aprobar: int
+    estudiantes_activos: int
+    empresas_activas: int
