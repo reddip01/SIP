@@ -201,3 +201,9 @@ class ComentarioCreate(BaseModel):
 class FechasPracticaUpdate(BaseModel):
     fecha_inicio_practica: datetime
     fecha_fin_practica: datetime
+
+# cambio de contraseña
+
+class PasswordChangeInput(BaseModel):
+    old_password: str  # La contraseña actual (para verificar)
+    new_password: str  # La contraseña nueva
